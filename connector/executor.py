@@ -29,3 +29,6 @@ class Executor:
 
     def sql(self, sql: str) -> pd.DataFrame:
         return pd.read_sql(sql, self.connector)
+
+    def __del__(self):
+        self.connector.close()
