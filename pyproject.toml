@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "connector"
-version = "0.1.0"
+version = "0.1.1"
 description = "MYSQL query executor with pandas"
 authors = ["yangroro <yang@heechan.kr>"]
 license = "MIT"
 packages = [
-    { include = "src" },
+    { include = "connector" },
 ]
 readme = "README.md"
 
