@@ -1,6 +1,13 @@
 # Connector
 
 pymysql wrapper for execute sql with pandas dataframe
+## Installation
+```shell script
+# In your shell
+pip install -U git+https://github.com/alpha-trading/connector.git
+# In colab
+!pip install -U git+https://github.com/alpha-trading/connector.git
+```
 
 ## Usage
 ```python
