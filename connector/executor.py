@@ -28,8 +28,4 @@ class Executor:
         self.connector = pymysql.connect(**parse(database_url))
 
     def sql(self, sql: str) -> pd.DataFrame:
-        cursor = self.connector.cursor()
-        cursor.execute(sql)
-        result = cursor.fetchall()
-        frame = pd.DataFrame(result)
-        return frame
+        return pd.read_sql(sql, self.connector)
