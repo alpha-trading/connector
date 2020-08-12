@@ -1,17 +1,17 @@
-# Connector
+# Utils
 
 pymysql wrapper for execute sql with pandas dataframe
 ## Installation
 ```shell script
 # In your shell
-pip install -U git+https://github.com/alpha-trading/connector.git
+pip install -U git+https://github.com/alpha-trading/utils.git
 # In colab
-!pip install -U git+https://github.com/alpha-trading/connector.git
+!pip install -U git+https://github.com/alpha-trading/utils.git
 ```
 
 ## Usage
 ```python
-from connector import Executor
+from utils import Executor
 
 executor = Executor("mysql://user:password@db.url.com:3306/dbname")
 # or use env var (env name: DATABASE_URL)
