@@ -15,7 +15,7 @@ class Indicator:
     def add_profit_rate(pnl: DataFrame) -> DataFrame:
         """이익율 컬럼 추가"""
         with_profit = pnl.copy()
-        with_profit['profit_rate'] = pnl.delta / pnl.shift(1).pnl * 100
+        with_profit['profit_rate'] = pnl.delta / pnl.shift(1).pnl
         return with_profit
 
     @staticmethod
@@ -62,8 +62,31 @@ class Indicator:
         for day, r in days:
             line_mid = df['close'].rolling(window=day).mean()
             line_std = df['close'].rolling(window=day).std()
-            df[f'bollin_{day}_upper'] = line_mid + line_std
-            df[f'bollin_{day}_lower'] = line_mid - line_std
+            df[f'bollin_{day}_upper'] = line_mid + r * line_std
+            df[f'bollin_{day}_lower'] = line_mid - r * line_std
             df[f'bollin_{day}_width'] = (df[f'bollin_{day}_upper'] - df[f'bollin_{day}_lower']) / line_mid
+
+        return df
+
+    @staticmethod
+    def add_dmi_atr(df: DataFrame, *days):
+        """
+        dmi : 추세판단
+        atr : 위험판단
+        """
+        for day in days:
+            with_dmi = df.copy()
+            with_dmi['dm_p'] = np.where(df['high'].diff(1) > 0 and df['high'].diff(1) + df['low'].diff(1) > 0,
+                                        df['high'].diff(1), 0)
+            with_dmi['dm_m'] = np.where(df['low'].diff(1) < 0 and df['high'].diff(1) + df['low'].diff(1) < 0,
+                                        df['low'].diff(1) * (-1), 0)
+            with_dmi['tr'] = df.max(df['high'] - df['low'], abs(df['close'].shift(-1) - df['high']),
+                                    abs(df['close'].shift(-1) - df['low']))
+            with_dmi['di_p'] = with_dmi['dm_p'].rolling(window=day).mean() / with_dmi['tr'].rolling(window=day).mean()
+            with_dmi['di_m'] = with_dmi['dm_m'].rolling(window=day).mean() / with_dmi['tr'].rolling(window=day).mean()
+            df[f'atr_{day}'] = with_dmi['tr'].rolling(window=day).mean()
+            df[f'dx_{day}'] = abs(with_dmi['di_p'] - with_dmi['di_m']) / (with_dmi['di_p'] + with_dmi['di_m'])
+            df[f'adx_{day}'] = df[f'dx_{day}'].rolling(window=day).mean()
+            df[f'adxr_{day}'] = df[f'adx_{day}'].rolling(window=day).mean()
 
         return df
