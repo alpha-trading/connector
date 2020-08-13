@@ -5,7 +5,7 @@ def year_to_datetime(year: int):
     return datetime(year=year, month=1, day=1)
 
 
-def get_hoga(price, market):
+def get_hoga(price: int, market: str) -> int:
     """
     주가에 따른 1호가 가격을 구하는 함수
     :param price: 주가
@@ -43,7 +43,7 @@ def get_hoga(price, market):
     return hoga
 
 
-def get_bid_price(price, market):
+def get_bid_price(price: int, market: str) -> int:
     """
     살 가격을 구하는 함수
     :param price: 현재가
@@ -54,7 +54,7 @@ def get_bid_price(price, market):
     return (price // hoga) * hoga + hoga
 
 
-def get_ask_price(price, market):
+def get_ask_price(price: int, market: str) -> int:
     """
     팔 가격을 구하는 함수
     :param price: 현재가
@@ -68,14 +68,14 @@ def get_ask_price(price, market):
         return (price // hoga) * hoga
 
 
-def get_upper_limit(today):
+def get_limit_percent(today: date) -> float:
     if today < date(2015, 6, 15):
-        return 1.15
+        return 0.15
     else:
-        return 1.3
+        return 0.3
 
 
-def get_upper_limit_price(yesterday_close, today, market):
+def get_upper_limit_price(yesterday_close: int, today: date, market: str) -> int:
     """
     당일 상한가를 반환하는 함수
     :param yesterday_close: 전일 종가
@@ -83,9 +83,25 @@ def get_upper_limit_price(yesterday_close, today, market):
     :param market: kospi 또는 kosdaq
     :return: 당일 상한가
     """
-    upper_limit = get_upper_limit(today)
-    predict_upper_limit_price = yesterday_close * upper_limit
+    limit_percent = get_limit_percent(today)
+    predict_upper_limit_price = int(yesterday_close * (1 + limit_percent))
     hoga = get_hoga(predict_upper_limit_price, market)
     real_upper_limit_price = (predict_upper_limit_price // hoga) * hoga
 
     return real_upper_limit_price
+
+
+def get_lower_limit_price(yesterday_close: int, today: date, market: str) -> int:
+    """
+    당일 하한가를 반환하는 함수
+    :param yesterday_close: 전일 종가
+    :param today: 당일 날짜
+    :param market: kospi 또는 kosdaq
+    :return: 당일 하한가
+    """
+    limit_percent = get_limit_percent(today)
+    predict_lower_limit_price = int(yesterday_close * (1 - limit_percent))
+    hoga = get_hoga(predict_lower_limit_price, market)
+    real_lower_limit_price = (predict_lower_limit_price // hoga) * hoga + hoga
+
+    return real_lower_limit_price
