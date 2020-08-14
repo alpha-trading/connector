@@ -24,6 +24,12 @@ class Indicator:
         for day in days:
             df[f'dma_{day}'] = df['close'].rolling(window=day).mean()
         return df
+    
+    @staticmethod
+    def add_ema(df: DataFrame, *days):
+        for day in days:
+            df[f'ema_{day}'] = df['close'].ewm(span=day, adjust=False).mean()
+        return df
 
     @staticmethod
     def add_rsi(df: DataFrame, *days) -> DataFrame:
@@ -57,7 +63,7 @@ class Indicator:
     def add_bollinger(df: DataFrame, *days):
         """
         볼린저 밴드
-        사용법: Indicator.add_bollinger(df, (20, 2), (60,2)
+        사용법: Indicator.add_bollinger(df, (20, 2), (60,2))
         """
         for day, r in days:
             line_mid = df['close'].rolling(window=day).mean()
@@ -66,6 +72,20 @@ class Indicator:
             df[f'bollin_{day}_lower'] = line_mid - r * line_std
             df[f'bollin_{day}_width'] = (df[f'bollin_{day}_upper'] - df[f'bollin_{day}_lower']) / line_mid
 
+        return df
+    
+    @staticmethod
+    def add_envelope(df: DataFrame, *days):
+        """
+        dma + upper and lower bounds
+        사용법: Indicator.add_envelope(df, (20, 20), (50, 5))
+        """
+        for day, r in days:
+            line_mid = df['close'].rolling(window=day).mean() 
+            df[f'envelope_{day}_upper'] = line_mid + r / 100 * line_mid
+            df[f'envelope_{day}_lower'] = line_mid - r / 100 * line_mid
+            df[f'envelope_{day}_width'] = (df[f'envelope_{day}_upper'] - df[f'envelope_{day}_lower']) / line_mid
+        
         return df
 
     @staticmethod
