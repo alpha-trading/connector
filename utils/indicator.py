@@ -24,7 +24,7 @@ class Indicator:
         for day in days:
             df[f'dma_{day}'] = df['close'].rolling(window=day).mean()
         return df
-    
+
     @staticmethod
     def add_ema(df: DataFrame, *days):
         for day in days:
@@ -73,7 +73,7 @@ class Indicator:
             df[f'bollin_{day}_width'] = (df[f'bollin_{day}_upper'] - df[f'bollin_{day}_lower']) / line_mid
 
         return df
-    
+
     @staticmethod
     def add_envelope(df: DataFrame, *days):
         """
@@ -81,11 +81,11 @@ class Indicator:
         사용법: Indicator.add_envelope(df, (20, 20), (50, 5))
         """
         for day, r in days:
-            line_mid = df['close'].rolling(window=day).mean() 
-            df[f'envelope_{day}_upper'] = line_mid + r / 100 * line_mid
-            df[f'envelope_{day}_lower'] = line_mid - r / 100 * line_mid
+            line_mid = df['close'].rolling(window=day).mean()
+            df[f'envelope_{day}_upper'] = line_mid + r * line_mid
+            df[f'envelope_{day}_lower'] = line_mid - r * line_mid
             df[f'envelope_{day}_width'] = (df[f'envelope_{day}_upper'] - df[f'envelope_{day}_lower']) / line_mid
-        
+
         return df
 
     @staticmethod
