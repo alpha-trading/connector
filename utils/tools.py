@@ -1,8 +1,8 @@
 from datetime import datetime, date
 
 
-def year_to_datetime(year: int):
-    return datetime(year=year, month=1, day=1)
+def year_to_date(year: int):
+    return date(year=year, month=1, day=1)
 
 
 def get_hoga(price: int, market: str) -> int:
@@ -39,6 +39,8 @@ def get_hoga(price: int, market: str) -> int:
             hoga = 5
         else:
             hoga = 1
+    else:
+        raise ValueError("market should be kospi or kosdaq")
 
     return hoga
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 from pandas import DataFrame
 
-from utils.tools import year_to_datetime
+from utils.tools import year_to_date
 
 
 class Evaluator:
@@ -9,7 +9,7 @@ class Evaluator:
     def _add_profit(pnl: DataFrame) -> DataFrame:
         """거래 차익 컬럼 추가"""
         with_profit = pnl.copy()
-        with_profit['profit'] = pnl.pnl.diff().shift(1)
+        with_profit['profit'] = pnl.pnl.diff()
         return with_profit
 
     @staticmethod
@@ -74,8 +74,6 @@ class Evaluator:
         :return: 거래일수, 승률, 손익비, 샤프지수, 최대 낙폭 퍼센트, 누적수익율
         """
 
-        ### 수정 사항 ---> 연도 별로 pnl 평가하도록 하자...! (total과 병행....!)
-
         first = pnl.iloc[0].name  # type: datetime
         last = pnl.iloc[-1].name  # type: datetime
 
@@ -91,8 +89,8 @@ class Evaluator:
         pnl = cls._remove_non_trading_days(pnl)
 
         for year in range(first.year, last.year + 1):
-            start = year_to_datetime(year)
-            end = year_to_datetime(year + 1)
+            start = year_to_date(year)
+            end = year_to_date(year + 1)
             mask = (pnl.index >= start) & (pnl.index < end)
             this_year_df = pnl[mask]
             winning_rate, trading_days = cls._get_winning_rate(this_year_df)
@@ -115,7 +113,7 @@ class Evaluator:
             'profit_loss_rate': cls._get_profit_loss_rate(pnl),
             'shape_ratio': cls._get_shape_ratio(raw_pnl),
             'mdd': mdd,
-            'cumulative_yield': cls._get_cumulative_yield(pnl),
+            'cumulative_yield': cls._get_cumulative_yield(raw_pnl),
         }
         year_df = DataFrame.from_dict(result, orient='index')
         return year_df

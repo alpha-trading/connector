@@ -19,10 +19,10 @@ class Indicator:
         return with_profit
 
     @staticmethod
-    def add_dma(df: DataFrame, *days) -> DataFrame:
+    def add_sma(df: DataFrame, *days) -> DataFrame:
         """이동평균선 구하기"""
         for day in days:
-            df[f'dma_{day}'] = df['close'].rolling(window=day).mean()
+            df[f'sma_{day}'] = df['close'].rolling(window=day).mean()
         return df
 
     @staticmethod
@@ -39,7 +39,10 @@ class Indicator:
 
             average_up = DataFrame(up).rolling(window=day, min_periods=day).mean()
             average_down = DataFrame(down).rolling(window=day, min_periods=day).mean()
+            df.reset_index(drop=False, inplace=True)
             df[f'rsi_{day}'] = average_up.div(average_down + average_up)
+            df = df.set_index('date')
+            df = df.drop(columns=['index'])
 
         return df
 
@@ -77,8 +80,8 @@ class Indicator:
     @staticmethod
     def add_envelope(df: DataFrame, *days):
         """
-        dma + upper and lower bounds
-        사용법: Indicator.add_envelope(df, (20, 20), (50, 5))
+        sma + upper and lower bounds
+        사용법: Indicator.add_envelope(df, (20, 0.05), (50, 0.05))
         """
         for day, r in days:
             line_mid = df['close'].rolling(window=day).mean()
