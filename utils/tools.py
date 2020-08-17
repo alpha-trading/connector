@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import date
 
 
 def year_to_date(year: int):
