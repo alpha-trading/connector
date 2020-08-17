@@ -4,6 +4,9 @@ from utils import Executor
 from datetime import date
 from pandas import DataFrame
 
+TABLE_RAW_CANDLE_DAY = 'data_candleday'
+TABLE_EDITED_CANDLE_DAY = 'data_editedcandleday'
+
 
 class Generator:
     def __init__(self, executor: Executor):
@@ -32,16 +35,11 @@ class Generator:
         past_universe_stock_list = df['ticker'].to_list()
         return past_universe_stock_list
 
-    def get_day_price_data(self, universe: str) -> dict:
-        """
-        universe에 포함된 종목들의 일봉 데이터 반환
-        :param universe: kospi200 또는 kosdaq150
-        :return: 일봉 데이터
-        """
+    def _get_day_price_data(self, universe: str, table_name: str) -> dict:
         day_price = {}
         past_universe_stock_list = self.get_past_universe_stock_list(universe)
         for ticker in past_universe_stock_list:
-            query = f"SELECT candle.*, ticker.ticker FROM data_candleday " \
+            query = f"SELECT candle.*, ticker.ticker FROM {table_name} " \
                     f"AS candle INNER JOIN data_ticker AS ticker ON ticker.id = candle.ticker_id " \
                     f"WHERE ticker = '{ticker}' and market = '{universe[:-3]}'"
             df = self.executor.sql(query)
@@ -50,6 +48,22 @@ class Generator:
             day_price[ticker] = df
 
         return day_price
+
+    def get_day_price_data(self, universe: str) -> dict:
+        """
+        universe에 포함된 종목들의 무수정 주가 일봉 데이터 반환
+        :param universe: kospi200 또는 kosdaq150
+        :return: 일봉 데이터
+        """
+        return self._get_day_price_data(universe, TABLE_RAW_CANDLE_DAY)
+
+    def get_edited_day_price_data(self, universe: str) -> dict:
+        """
+        universe에 포함된 종목들의 수정주가 일봉 데이터 반환
+        :param universe:
+        :return: 일봉 데이터
+        """
+        return self._get_day_price_data(universe, TABLE_EDITED_CANDLE_DAY)
 
     def get_today_universe_stock_list(self, universe: str, today: date) -> list:
         """
