@@ -44,7 +44,6 @@ class Generator:
                     f"WHERE ticker = '{ticker}' and market = '{universe[:-3]}'"
             df = self.executor.sql(query)
             df = df.drop(['id', 'ticker_id', 'ticker'], axis=1)
-            df = df.set_index("date")
             day_price[ticker] = df
 
         return day_price
@@ -97,7 +96,6 @@ class Generator:
                 f"WHERE ticker = '{ticker}'"
         df = self.executor.sql(query)
         df = df.drop(['id', 'ticker_id', 'ticker'], axis=1)
-        df = df.set_index("date")
 
         return df
 
@@ -108,6 +106,5 @@ class Generator:
         """
         query = f"SELECT * FROM data_wondollarexchangerate"
         df = self.executor.sql(query)
-        df = df.set_index('date')
 
         return df
