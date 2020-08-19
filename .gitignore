@@ -236,3 +236,4 @@ dmypy.json
 
 test.py
 data
+.idea
