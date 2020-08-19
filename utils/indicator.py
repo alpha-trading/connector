@@ -42,8 +42,10 @@ class Indicator:
             df.reset_index(drop=False, inplace=True)
             df[f'rsi_{day}'] = average_up.div(average_down + average_up)
             df = df.set_index('date')
-            df = df.drop(columns=['index'])
-
+            try:
+                df = df.drop(columns=['index'], axis=1)
+            except KeyError:
+                pass
         return df
 
     @staticmethod
