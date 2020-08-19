@@ -39,6 +39,8 @@ def get_hoga(price: int, market: str) -> int:
             hoga = 5
         else:
             hoga = 1
+    elif market == 'etf':
+        hoga = 5
     else:
         raise ValueError("market should be kospi or kosdaq")
 
