@@ -210,3 +210,21 @@ class Indicator:
         :return:
         """
         return (df['high'] - df['low']).rolling(window=day).mean()
+
+    @staticmethod
+    def get_demark(df: DataFrame) -> Series:
+        """
+        :param df:
+        :return: demark 고가, demark 저가
+        """
+        d1 = np.where(df['close'] > df['open'],
+                      (df['high'] * 2 + df['low'] + df['close']) / 2, 0)
+        d2 = np.where(df['close'] < df['open'],
+                      (df['high'] + df['low'] * 2 + df['close']) / 2, 0)
+        d3 = np.where(df['close'] == df['open'],
+                      (df['high'] + df['low'] + df['close'] * 2) / 2, 0)
+        d = Series(d1 + d2 + d3)
+        demark_high = (d - df['low']).shift(1)
+        demark_low = (d - df['high']).shift(1)
+
+        return demark_high, demark_low
