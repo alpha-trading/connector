@@ -24,7 +24,7 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name='utils',
-    version='1.0.5',
+    version='1.0.7',
     description='Alpha trading utils with pandas',
     python_requires='==3.*,>=3.7.0',
     project_urls={"homepage": "https://github.com/alpha-trading/utils", "repository": "https://github.com/alpha-trading/utils"},
@@ -34,6 +34,6 @@ setup(
     packages=['utils'],
     package_dir={"": "."},
     package_data={},
-    install_requires=['pandas==1.*,>=1.0.5', 'pymysql==0.*,>=0.9.3', 'python-dotenv==0.*,>=0.14.0'],
+    install_requires=['pandas==1.*,>=1.1.0', 'pymysql==0.*,>=0.9.3', 'python-dotenv==0.*,>=0.14.0'],
     extras_require={"dev": ["dephell==0.*,>=0.8.3"]},
 )
