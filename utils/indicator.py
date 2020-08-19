@@ -103,7 +103,6 @@ class Indicator:
             line_mid = df['close'].rolling(window=day).mean()
             df[f'envelope_{day}_upper'] = line_mid + r * line_mid
             df[f'envelope_{day}_lower'] = line_mid - r * line_mid
-            df[f'envelope_{day}_width'] = (df[f'envelope_{day}_upper'] - df[f'envelope_{day}_lower']) / line_mid
 
         return df
 
