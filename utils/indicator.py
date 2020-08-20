@@ -57,69 +57,42 @@ class Indicator:
         return (df['close'] - df['low']) / (df['high'] - df['low'])
 
     @staticmethod
-    def get_stddev(df: DataFrame, day: int) -> Series:
+    def get_stddev(df: DataFrame, day: int, ddof: int = 1) -> Series:
         """
         종가 기준으로 표준편차 구하기
         Example add_stddev(df, 5)
         :param df:
         :param day:
+        :param ddof:
         :return:
         """
-        return df['close'].rolling(window=day).std()
+        return df['close'].rolling(window=day).std(ddof=ddof)
 
-    @staticmethod
-    def get_bollinger(df: DataFrame, day: int, r: int) -> Tuple[Series, Series, Series]:
+    @classmethod
+    def get_bollinger(cls, df: DataFrame, day: int, r: int) -> Tuple[Series, Series]:
         """
         볼린저 밴드
         Example: Indicator.add_bollinger(df, 20, 2)
         """
-        line_mid = df['close'].rolling(window=day).mean()
-        line_std = df['close'].rolling(window=day).std()
+        line_mid = cls.get_sma(df, day)
+        line_std = cls.get_stddev(df, day, ddof=0)
 
         upper = line_mid + r * line_std
         lower = line_mid - r * line_std
-        width = (df[f'bollin_{day}_upper'] - df[f'bollin_{day}_lower']) / line_mid
-
-        return upper, lower, width
-
-    @staticmethod
-    def get_envelope(df: DataFrame, day: int, r: float) -> Tuple[Series, Series]:
-        """
-        sma + upper and lower bounds
-        Example: add_envelope(df, 20, 0.05)
-        """
-        line_mid = df['close'].rolling(window=day).mean()
-        upper = line_mid + r * line_mid
-        lower = line_mid - r * line_mid
 
         return upper, lower
 
     @classmethod
-    def get_dmi(cls, df: DataFrame, day: int) -> Tuple[Series, Series, Series]:
+    def get_envelope(cls, df: DataFrame, day: int, r: float) -> Tuple[Series, Series]:
         """
-        dmi: 추세판단
-        atr: 위험판단
-        Example: add_dmi_atr(df, 5)
-        :param df:
-        :param day:
-        :return: plus di, minus di, adx
+        sma + upper and lower bounds
+        Example: add_envelope(df, 20, 0.05)
         """
-        temp = df.copy()
-        temp['pdm'] = np.where((df['high'].diff() > 0) & (df['high'].diff() + df['low'].diff() > 0),
-                               df['high'].diff(), 0)
-        temp['mdm'] = np.where((df['low'].diff() < 0) & (df['high'].diff() + df['low'].diff() < 0),
-                               abs(df['low'].diff()), 0)
+        line_mid = cls.get_sma(df, day)
+        upper = line_mid + r * line_mid
+        lower = line_mid - r * line_mid
 
-        temp['atr'] = cls.get_atr(temp, day)
-        temp['pdm_ema'] = cls.get_ema(temp, day, column='pdm')
-        temp['mdm_ema'] = cls.get_ema(temp, day, column='mdm')
-
-        pdi = temp['pdm_ema'] / temp['atr']
-        mdi = temp['mdm_ema'] / temp['atr']
-        temp['dx'] = abs(pdi - mdi) / (pdi + mdi)
-        adx = temp['dx'].rolling(window=day).mean()
-
-        return pdi, mdi, adx
+        return upper, lower
 
     @staticmethod
     def get_pivot(df: DataFrame) -> Tuple[Series, Series, Series, Series, Series]:
@@ -152,53 +125,9 @@ class Indicator:
         maintain = np.where(df['close'].diff(1) == 0, df['vol'] * 0.5, 0)
         up = up + maintain
         down = down + maintain
-        sum_up = DataFrame(up).rolling(window=day, min_periods=day).sum()
-        sum_down = DataFrame(down).rolling(window=day, min_periods=day).sum()
+        sum_up = Series(up).rolling(window=day, min_periods=day).sum()
+        sum_down = Series(down).rolling(window=day, min_periods=day).sum()
         return sum_up.div(sum_down)
-
-    @staticmethod
-    def wwma(values: Series, day: int) -> Series:
-        """
-         J. Welles Wilder's EMA
-        """
-        return values.ewm(alpha=1 / day, min_periods=day, adjust=False).mean()
-
-    @classmethod
-    def get_atr(cls, df: DataFrame, day: int) -> Series:
-        """
-        변동성 지표
-        tr = max(고가 - 저가, abs(고가 - 전일 종가), (저가 - 전일 종가))
-        tr을 평균을 내준다.
-        Example:
-        :param df:
-        :param day:
-        :return:
-        """
-        temp = df.copy()
-        temp['a1'] = df['high'] - df['low']
-        temp['a2'] = abs(df['close'].shift(1) - df['high'])
-        temp['a3'] = abs(df['close'].shift(1) - df['low'])
-        temp['tr'] = temp[['a1', 'a2', 'a3']].max(axis=1)
-        return cls.wwma(temp['tr'], day)
-
-    @classmethod
-    def get_eatr(cls, df: DataFrame, day: int):
-        """
-        변동성 지표
-        tr = max(고가 - 저가, abs(고가 - 전일 종가), (저가 - 전일 종가))
-        tr을 지수 가중 평균을 내준다.
-        Example:
-        :param df:
-        :param day:
-        :return:
-        """
-        temp = df.copy()
-        temp['a1'] = df['high'] - df['low']
-        temp['a2'] = abs(df['close'].shift(1) - df['high'])
-        temp['a3'] = abs(df['close'].shift(1) - df['low'])
-        temp['tr'] = temp[['a1', 'a2', 'a3']].max(axis=1)
-
-        return cls.get_ema(temp, day)
 
     @staticmethod
     def get_range(df: DataFrame, day: int = 1):

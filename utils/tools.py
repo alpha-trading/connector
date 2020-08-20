@@ -1,4 +1,5 @@
 from datetime import date
+from math import ceil, floor
 
 
 def year_to_date(year: int):
@@ -47,15 +48,15 @@ def get_hoga(price: int, market: str) -> int:
     return hoga
 
 
-def get_bid_price(price: int, market: str) -> int:
+def get_bid_price(price: int or float, market: str) -> int:
     """
     살 가격을 구하는 함수
     :param price: 현재가
     :param market: 시장
     :return: 매수 가격
     """
-    hoga = get_hoga(price, market)
-    return (price // hoga) * hoga + hoga
+    hoga = get_hoga(floor(price), market)
+    return int(price // hoga) * hoga + hoga
 
 
 def get_ask_price(price: int, market: str) -> int:
@@ -65,11 +66,11 @@ def get_ask_price(price: int, market: str) -> int:
     :param market: 시장
     :return: 매도 가격
     """
-    hoga = get_hoga(price, market)
+    hoga = get_hoga(floor(price), market)
     if price % hoga == 0:
-        return (price // hoga) * hoga - hoga
+        return int(price // hoga) * hoga - hoga
     else:
-        return (price // hoga) * hoga
+        return int(price // hoga) * hoga
 
 
 def get_limit_percent(today: date) -> float:
@@ -88,9 +89,9 @@ def get_upper_limit_price(yesterday_close: int, today: date, market: str) -> int
     :return: 당일 상한가
     """
     limit_percent = get_limit_percent(today)
-    predict_upper_limit_price = int(yesterday_close * (1 + limit_percent))
-    hoga = get_hoga(predict_upper_limit_price, market)
-    real_upper_limit_price = (predict_upper_limit_price // hoga) * hoga
+    predict_upper_limit_price = yesterday_close * (1 + limit_percent)
+    hoga = get_hoga(floor(predict_upper_limit_price), market)
+    real_upper_limit_price = int(predict_upper_limit_price // hoga) * hoga
 
     return real_upper_limit_price
 
@@ -104,8 +105,8 @@ def get_lower_limit_price(yesterday_close: int, today: date, market: str) -> int
     :return: 당일 하한가
     """
     limit_percent = get_limit_percent(today)
-    predict_lower_limit_price = int(yesterday_close * (1 - limit_percent))
-    hoga = get_hoga(predict_lower_limit_price, market)
-    real_lower_limit_price = (predict_lower_limit_price // hoga) * hoga + hoga
+    predict_lower_limit_price = yesterday_close * (1 - limit_percent)
+    hoga = get_hoga(floor(predict_lower_limit_price), market)
+    real_lower_limit_price = int(predict_lower_limit_price // hoga) * hoga + hoga
 
     return real_lower_limit_price
