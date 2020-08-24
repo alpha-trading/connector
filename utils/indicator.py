@@ -212,7 +212,7 @@ class Indicator:
         return (df['high'] - df['low']).rolling(window=day).mean()
 
     @staticmethod
-    def get_demark(df: DataFrame) -> Series:
+    def get_demark(df: DataFrame) -> Tuple[Series, Series]:
         """
         :param df:
         :return: demark 고가, demark 저가
@@ -225,3 +225,7 @@ class Indicator:
         demark_low = (d - df['high']).shift(1)
 
         return demark_high, demark_low
+
+    @staticmethod
+    def get_momentum(df: DataFrame, day: int) -> Series:
+        return df['close'].diff(day) / df['close'].shift(day)
