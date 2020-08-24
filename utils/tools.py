@@ -1,5 +1,8 @@
+import os
 from datetime import date
 from math import ceil, floor
+
+import dotenv
 
 
 def year_to_date(year: int):
@@ -110,3 +113,10 @@ def get_lower_limit_price(yesterday_close: int, today: date, market: str) -> int
     real_lower_limit_price = int(predict_lower_limit_price // hoga) * hoga + hoga
 
     return real_lower_limit_price
+
+
+def api_token_getter() -> str:
+    dotenv.load_dotenv()
+
+    api_token = os.environ.get('API_TOKEN')
+    return api_token
