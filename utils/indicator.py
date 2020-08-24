@@ -130,7 +130,7 @@ class Indicator:
         return sum_up.div(sum_down)
 
     @staticmethod
-    def get_range(df: DataFrame, day: int = 1):
+    def get_range(df: DataFrame, day: int = 1) -> Series:
         """
         고가 - 저가
         Example: add_range(df), add_range(df, 5)
