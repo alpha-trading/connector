@@ -115,7 +115,7 @@ def get_lower_limit_price(yesterday_close: int, today: date, market: str) -> int
     return real_lower_limit_price
 
 
-def api_token_getter() -> str:
+def get_api_token() -> str:
     dotenv.load_dotenv()
 
     api_token = os.environ.get('API_TOKEN')
