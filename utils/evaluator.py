@@ -1,26 +1,24 @@
 from datetime import datetime
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 from utils.tools import year_to_date
 
 
 class Evaluator:
     @staticmethod
-    def _add_profit(pnl: DataFrame) -> DataFrame:
+    def _get_profit(pnl: DataFrame, pnl_column='pnl') -> Series:
         """거래 차익 컬럼 추가"""
-        with_profit = pnl.copy()
-        with_profit['profit'] = pnl.pnl.diff()
-        return with_profit
+        profit = pnl[pnl_column].diff()
+        return profit
 
     @staticmethod
-    def _add_profit_rate(pnl: DataFrame) -> DataFrame:
+    def _get_profit_rate(pnl: DataFrame, pnl_column='pnl', profit_column='profit') -> Series:
         """이익율 컬럼 추가"""
-        with_profit = pnl.copy()
-        with_profit['profit_rate'] = pnl.profit / pnl.shift(1).pnl
-        return with_profit
+        profit_rate = pnl[profit_column] / pnl.shift(1)[pnl_column]
+        return profit_rate
 
     @staticmethod
-    def _get_cumulative_yield(pnl: DataFrame) -> DataFrame:
+    def _get_cumulative_yield(pnl: DataFrame) -> float:
         """누적수익율"""
         cumulative_yield = (pnl['pnl'].iloc[-1] - pnl['pnl'].iloc[0]) / pnl['pnl'].iloc[0]
         return cumulative_yield
@@ -28,11 +26,10 @@ class Evaluator:
     @staticmethod
     def _get_winning_rate(pnl: DataFrame) -> (float, int):
         """승률과 거래일을 구함"""
-        with_win = pnl.copy()
-        with_win['is_win'] = pnl.profit > 0
+        is_win= pnl.profit > 0
 
-        winning_rate = with_win['is_win'].mean()
-        trading_days = with_win['is_win'].count()
+        winning_rate = is_win.mean()
+        trading_days = is_win.count()
         return winning_rate, trading_days
 
     @staticmethod
@@ -45,15 +42,13 @@ class Evaluator:
         return rate
 
     @staticmethod
-    def _add_mdd(pnl: DataFrame) -> DataFrame:
+    def _get_mdd(pnl: DataFrame) -> Series:
         """최대 낙폭"""
-        tmp = pnl.copy()
-        with_mdd = pnl.copy()
-        tmp['ath'] = tmp.rolling(len(tmp), min_periods=1)['pnl'].max()
-        tmp['dd'] = tmp['pnl'] - tmp['ath']
-        with_mdd['mdd'] = tmp.rolling(len(tmp), min_periods=1)['dd'].min() / tmp['ath']
+        ath = pnl.rolling(len(pnl), min_periods=1)['pnl'].max()
+        dd = pnl['pnl'] - ath
+        mdd = dd.rolling(len(dd), min_periods=1).min() / ath
 
-        return with_mdd
+        return mdd
 
     @staticmethod
     def _get_shape_ratio(pnl: DataFrame) -> float:
@@ -81,9 +76,9 @@ class Evaluator:
 
         result = {}
 
-        pnl = cls._add_profit(pnl)
-        pnl = cls._add_profit_rate(pnl)
-        pnl = cls._add_mdd(pnl)
+        pnl['profit'] = cls._get_profit(pnl)
+        pnl['profit_rate'] = cls._get_profit_rate(pnl)
+        pnl['mdd'] = cls._get_mdd(pnl)
         pnl = pnl[1:]
         raw_pnl = pnl.copy()
         pnl = cls._remove_non_trading_days(pnl)
