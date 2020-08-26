@@ -77,8 +77,9 @@ class Indicator:
         line_mid = cls.get_sma(df, day)
         line_std = cls.get_stddev(df, day, ddof=0)
 
-        upper = line_mid + r * line_std
-        lower = line_mid - r * line_std
+        bollinger_range = line_std.multiply(r)
+        upper = line_mid + bollinger_range
+        lower = line_mid - bollinger_range
 
         return upper, lower
 
@@ -89,8 +90,10 @@ class Indicator:
         Example: add_envelope(df, 20, 0.05)
         """
         line_mid = cls.get_sma(df, day)
-        upper = line_mid + r * line_mid
-        lower = line_mid - r * line_mid
+
+        envelope_range = line_mid.multiply(r)
+        upper = line_mid + envelope_range
+        lower = line_mid - envelope_range
 
         return upper, lower
 

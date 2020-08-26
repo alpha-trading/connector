@@ -26,7 +26,7 @@ class Evaluator:
     @staticmethod
     def _get_winning_rate(pnl: DataFrame) -> (float, int):
         """승률과 거래일을 구함"""
-        is_win= pnl.profit > 0
+        is_win = pnl.profit > 0
 
         winning_rate = is_win.mean()
         trading_days = is_win.count()

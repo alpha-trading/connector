@@ -19,7 +19,8 @@ class Generator:
         :param end_date: back test 종료일
         :return: 과거 거래일 리스트 반환
         """
-        query = f"SELECT * FROM data_iskoreatradingday WHERE is_tradable = '1' and date >= '{start_date}' and date <= '{end_date}'"
+        query = f"SELECT * FROM data_iskoreatradingday " \
+                f"WHERE is_tradable = '1' and date >= '{start_date}' and date <= '{end_date}'"
         df = self.executor.sql(query)
         trading_day_list = df['date'].to_list()
         return trading_day_list

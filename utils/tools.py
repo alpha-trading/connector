@@ -1,6 +1,6 @@
 import os
 from datetime import date
-from math import ceil, floor
+from math import floor
 
 import dotenv
 
