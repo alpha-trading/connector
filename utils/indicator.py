@@ -170,8 +170,8 @@ class Indicator:
         return psychological
 
     @classmethod
-    def get_disparity(cls, df: DataFrame, day: int) -> Series:
-        sma = cls.get_sma(df['close'], day)
-        disparity = df['close'].divide(sma)
+    def get_disparity(cls, price: Series, day: int) -> Series:
+        sma = cls.get_sma(price, day)
+        disparity = price.divide(sma)
 
         return disparity
