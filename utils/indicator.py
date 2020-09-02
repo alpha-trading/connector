@@ -161,3 +161,19 @@ class Indicator:
     @staticmethod
     def get_momentum(df: DataFrame, day: int) -> Series:
         return df['close'].diff(day) / df['close'].shift(day)
+
+    @staticmethod
+    def get_psychological_line(df: DataFrame, day: int) -> Series:
+        up = np.where(df['close'].diff(1) > 0, 1, 0)
+        sum_up = Series(up).rolling(window=day, min_periods=day).sum()
+
+        psychological = sum_up.divide(day)
+
+        return psychological
+
+    @classmethod
+    def get_disparity(cls, df: DataFrame, day: int) -> Series:
+        sma = cls.get_sma(df, day)
+        disparity = df['close'].divide(sma)
+
+        return disparity
