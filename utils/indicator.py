@@ -32,7 +32,7 @@ class Indicator:
     def get_rsi(price: Series, day: int) -> Series:
         """
         RSI 과매도 과매수 판단 지표
-        Example add_rsi(df, 14)
+        Example add_rsi(close, 14)
         :param price:
         :param day:
         :return:
@@ -45,14 +45,16 @@ class Indicator:
         return average_up.div(average_down + average_up)
 
     @staticmethod
-    def get_ibs(df: DataFrame) -> Series:
+    def get_ibs(close: Series, high: Series, low: Series) -> Series:
         """
         IBS 구하기
-        Example add_ibs(df)
-        :param df:
+        Example add_ibs(close, high, low)
+        :param close:
+        :param low:
+        :param high:
         :return:
         """
-        return (df['close'] - df['low']) / (df['high'] - df['low'])
+        return (close - low) / (high - low)
 
     @staticmethod
     def get_stddev(price: Series, day: int, ddof: int = 1) -> Series:
@@ -96,34 +98,35 @@ class Indicator:
         return upper, lower
 
     @staticmethod
-    def get_pivot(df: DataFrame) -> Tuple[Series, Series, Series, Series, Series]:
+    def get_pivot(high: Series, low: Series, close: Series) -> Tuple[Series, Series, Series, Series, Series]:
         """
         전일 가격으로 pivot 중심선을 구하고 이를 통해 저항선 및 지지선 계산
         back test 할 때 다른 지표와는 달리 전일이 아닌 오늘 날짜를 사용해야 함.
         Example: add_pivot(df)
-        :param df:
+
         :return: 2차 저항선, 1차 저항선, 피봇 중심선, 1차 지지선, 2차 지지
         """
-        pivot = (df['high'].shift(1) + df['low'].shift(1) + df['close'].shift(1)) / 3
-        r2 = pivot + df['high'].shift(1) - df['low'].shift(1)
-        r1 = pivot * 2 - df['low'].shift(1)
-        s1 = pivot * 2 - df['high'].shift(1)
-        s2 = pivot - df['high'].shift(1) + df['low'].shift(1)
+        pivot = (high.shift(1) + low.shift(1) + close.shift(1)) / 3
+        r2 = pivot + high.shift(1).sub(low.shift(1))
+        r1 = (pivot * 2).sub(low.shift(1))
+        s1 = (pivot * 2).sub(high.shift(1))
+        s2 = pivot.sub(high.shift(1)) + low.shift(1)
 
         return r2, r1, pivot, s1, s2
 
     @staticmethod
-    def get_volume_ratio(df: DataFrame, day: int) -> Series:
+    def get_volume_ratio(close: Series, volume: Series, day: int) -> Series:
         """
         하락한 날의 거래량 대비 상승한 날의 거래량 측정
         Example : add_volume_ratio(df, 20)
-        :param df:
+        :param close:
+        :param volume:
         :param day:
         :return:
         """
-        up = np.where(df['close'].diff(1) > 0, df['vol'], 0)
-        down = np.where(df['close'].diff(1) < 0, df['vol'], 0)
-        maintain = np.where(df['close'].diff(1) == 0, df['vol'] * 0.5, 0)
+        up = np.where(close.diff(1).gt(0), volume, 0)
+        down = np.where(close.diff(1).lt(0), volume, 0)
+        maintain = np.where(close.diff(1).equals(0), volume.mul(0.5), 0)
         up = up + maintain
         down = down + maintain
         sum_up = Series(up).rolling(window=day, min_periods=day).sum()
@@ -131,28 +134,28 @@ class Indicator:
         return sum_up.div(sum_down)
 
     @staticmethod
-    def get_range(df: DataFrame, day: int = 1) -> Series:
+    def get_range(high: Series, low: Series, day: int = 1) -> Series:
         """
         고가 - 저가
         Example: add_range(df), add_range(df, 5)
-        :param df:
+        :param high:
+        :param low:
         :param day:
         :return:
         """
-        return (df['high'] - df['low']).rolling(window=day).mean()
+        return (high - low).rolling(window=day).mean()
 
     @staticmethod
-    def get_demark(df: DataFrame) -> Tuple[Series, Series]:
+    def get_demark(close: Series, open: Series, high: Series, low: Series) -> Tuple[Series, Series]:
         """
-        :param df:
         :return: demark 고가, demark 저가
         """
-        d1 = np.where(df['close'] > df['open'], (df['high'] * 2 + df['low'] + df['close']) / 2, 0)
-        d2 = np.where(df['close'] < df['open'], (df['high'] + df['low'] * 2 + df['close']) / 2, 0)
-        d3 = np.where(df['close'] == df['open'], (df['high'] + df['low'] + df['close'] * 2) / 2, 0)
+        d1 = np.where(close > open, (high.mul(2) + low + close) / 2, 0)
+        d2 = np.where(close < open, (high + low.mul(2) + close) / 2, 0)
+        d3 = np.where(close == open, (high + low + close.mul(2)) / 2, 0)
         d = Series(d1 + d2 + d3)
-        demark_high = (d - df['low']).shift(1)
-        demark_low = (d - df['high']).shift(1)
+        demark_high = (d - low).shift(1)
+        demark_low = (d - high).shift(1)
 
         return demark_high, demark_low
 
