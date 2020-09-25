@@ -1,111 +1,89 @@
 # -*- coding:utf-8 -*-
 from typing import Tuple
 
+import pandas as pd
 from pandas import DataFrame, Series
 import numpy as np
 
 
 class Indicator:
+
     @staticmethod
     def get_sma(price: Series, day: int) -> Series:
-        """
-        단순 이동평균선(평균값으로) 구하기
-        Example: add_sma(df, 10)
-        :param price:
-        :param day: 일자별 이동평균선 구하기
-        :return:
-        """
         return price.rolling(window=day).mean()
 
     @staticmethod
     def get_ema(price: Series, day: int) -> Series:
-        """
-        지수 이동평균선(최근일에 가중치를 주는 방식) 구하기
-        Example: add_ema(df, 5)
-        :param price:
-        :param day:
-        :return:
-        """
-        return price.ewm(span=day, adjust=False).mean()
+        ema = price.ewm(span=day, min_periods=day, adjust=False).mean()
+        return ema
+
+    @staticmethod
+    def get_ewma(price: Series, day: int) -> Series:
+        ewma = price.ewm(span=day, min_periods=day, adjust=True).mean()
+        return ewma
+
+    @staticmethod
+    def get_wma(price: Series, day: int) -> Series:
+        weight = np.arange(1, day+1)
+        wma = price.rolling(window=day).apply(lambda prices: np.dot(prices, weight) / weight.sum(), raw=True)
+        return wma
 
     @staticmethod
     def get_rsi(price: Series, day: int) -> Series:
-        """
-        RSI 과매도 과매수 판단 지표
-        Example add_rsi(close, 14)
-        :param price:
-        :param day:
-        :return:
-        """
         up = np.where(price.diff(1).gt(0), price.diff(1), 0)
         down = np.where(price.diff(1).lt(0), price.diff(1).multiply(-1), 0)
-
         average_up = Series(up).rolling(window=day, min_periods=day).mean()
         average_down = Series(down).rolling(window=day, min_periods=day).mean()
+        # average_up = Series(up).rolling(window=day).mean()
+        # average_down = Series(down).rolling(window=day).mean()
         return average_up.div(average_down + average_up)
 
     @staticmethod
-    def get_ibs(close: Series, high: Series, low: Series) -> Series:
-        """
-        IBS 구하기
-        Example add_ibs(close, high, low)
-        :param close:
-        :param low:
-        :param high:
-        :return:
-        """
+    def get_ibs(high: Series, low: Series, close: Series) -> Series:
         return (close - low) / (high - low)
 
     @staticmethod
     def get_stddev(price: Series, day: int, ddof: int = 1) -> Series:
-        """
-        가격 기준으로 표준편차 구하기
-        Example add_stddev(df, 5)
-        :param price:
-        :param day:
-        :param ddof:
-        :return:
-        """
         return price.rolling(window=day).std(ddof=ddof)
 
     @classmethod
-    def get_bollinger(cls, price: Series, day: int, r: int) -> Tuple[Series, Series]:
-        """
-        볼린저 밴드
-        Example: Indicator.add_bollinger(df, 20, 2)
-        """
-        line_mid = cls.get_sma(price, day)
-        line_std = cls.get_stddev(price, day, ddof=0)
+    def get_bollinger(cls, price: Series, day: int, r: int, criteria: str = 'ema') -> Tuple[Series, Series]:
+        if criteria == 'sma':
+            line_mid = cls.get_sma(price, day)
+            line_std = cls.get_stddev(price, day, ddof=0)
+        elif criteria == 'ema':
+            line_mid = cls.get_ema(price, day)
+            line_std = cls.get_stddev(price, day, ddof=0)
+        elif criteria == 'ewma':
+            line_mid = cls.get_ewma(price, day)
+            line_std = cls.get_stddev(price, day, ddof=0)
+        elif criteria == 'wma':
+            line_mid = cls.get_wma(price, day)
+            line_std = cls.get_stddev(price, day, ddof=0)
 
         bollinger_range = line_std.multiply(r)
         upper = line_mid + bollinger_range
         lower = line_mid - bollinger_range
-
         return upper, lower
 
     @classmethod
-    def get_envelope(cls, price: Series, day: int, r: float) -> Tuple[Series, Series]:
-        """
-        sma + upper and lower bounds
-        Example: add_envelope(df, 20, 0.05)
-        """
-        line_mid = cls.get_sma(price, day)
+    def get_envelope(cls, price: Series, day: int, r: float, criteria: str = 'ema') -> Tuple[Series, Series]:
+        if criteria == 'sma':
+            line_mid = Indicator.get_sma(price, day)
+        elif criteria == 'ema':
+            line_mid = Indicator.get_ema(price, day)
+        elif criteria == 'ewma':
+            line_mid = Indicator.get_ewma(price, day)
+        elif criteria == 'wma':
+            line_mid = Indicator.get_wma(price, day)
 
         envelope_range = line_mid.multiply(r)
         upper = line_mid + envelope_range
         lower = line_mid - envelope_range
-
         return upper, lower
 
     @staticmethod
     def get_pivot(high: Series, low: Series, close: Series) -> Tuple[Series, Series, Series, Series, Series]:
-        """
-        전일 가격으로 pivot 중심선을 구하고 이를 통해 저항선 및 지지선 계산
-        back test 할 때 다른 지표와는 달리 전일이 아닌 오늘 날짜를 사용해야 함.
-        Example: add_pivot(df)
-
-        :return: 2차 저항선, 1차 저항선, 피봇 중심선, 1차 지지선, 2차 지지
-        """
         pivot = (high.shift(1) + low.shift(1) + close.shift(1)) / 3
         r2 = pivot + high.shift(1).sub(low.shift(1))
         r1 = (pivot * 2).sub(low.shift(1))
@@ -116,40 +94,30 @@ class Indicator:
 
     @staticmethod
     def get_volume_ratio(close: Series, volume: Series, day: int) -> Series:
-        """
-        하락한 날의 거래량 대비 상승한 날의 거래량 측정
-        Example : add_volume_ratio(df, 20)
-        :param close:
-        :param volume:
-        :param day:
-        :return:
-        """
         up = np.where(close.diff(1).gt(0), volume, 0)
         down = np.where(close.diff(1).lt(0), volume, 0)
         maintain = np.where(close.diff(1).equals(0), volume.mul(0.5), 0)
+
         up = up + maintain
         down = down + maintain
         sum_up = Series(up).rolling(window=day, min_periods=day).sum()
         sum_down = Series(down).rolling(window=day, min_periods=day).sum()
         return sum_up.div(sum_down)
 
-    @staticmethod
-    def get_range(high: Series, low: Series, day: int = 1) -> Series:
-        """
-        고가 - 저가
-        Example: add_range(df), add_range(df, 5)
-        :param high:
-        :param low:
-        :param day:
-        :return:
-        """
-        return (high - low).rolling(window=day).mean()
+    @classmethod
+    def get_range(cls, high: Series, low: Series, day: int, criteria: str = 'sma') -> Series:
+        if criteria == 'sma':
+            day_range = cls.get_sma(high - low, day)
+        elif criteria == 'ema':
+            day_range = cls.get_ema(high - low, day)
+        elif criteria == 'ewma':
+            day_range = cls.get_ewma(high - low, day)
+        elif criteria == 'wma':
+            day_range = cls.get_wma(high - low, day)
+        return day_range
 
     @staticmethod
-    def get_demark(close: Series, open: Series, high: Series, low: Series) -> Tuple[Series, Series]:
-        """
-        :return: demark 고가, demark 저가
-        """
+    def get_demark(open: Series, high: Series, low: Series, close: Series) -> Tuple[Series, Series]:
         d1 = np.where(close > open, (high.mul(2) + low + close) / 2, 0)
         d2 = np.where(close < open, (high + low.mul(2) + close) / 2, 0)
         d3 = np.where(close == open, (high + low + close.mul(2)) / 2, 0)
@@ -169,12 +137,96 @@ class Indicator:
         sum_up = Series(up).rolling(window=day, min_periods=day).sum()
 
         psychological = sum_up.divide(day)
+        return psychological
 
+    @staticmethod
+    def get_new_psychological_line(price: Series, day: int) -> Series:
+        up_cnt = np.where(price.diff(1).gt(0), 1, 0)
+        up_cnt_cum = Series(up_cnt).rolling(window=day, min_periods=day).sum()
+        up_width = np.where(price.diff(1).gt(0), price.diff(1), 0)
+        up_width_cum = Series(up_width).rolling(window=day, min_periods=day).sum()
+
+        down_cnt = np.where(price.diff(1).lt(0), 1, 0)
+        down_cnt_cum = Series(down_cnt).rolling(window=day, min_periods=day).sum()
+        down_width = np.where(price.diff(1).lt(1), abs(price.diff(1)), 0)
+        down_width_cum = Series(down_width).rolling(window=day, min_periods=day).sum()
+
+        up = up_cnt_cum.multiply(up_width_cum)
+        down = down_cnt_cum.multiply(down_width_cum)
+
+        quo = up.subtract(down)
+        deno = (up_width_cum + down_width_cum).multiply(day)
+
+        psychological = quo.divide(deno)
         return psychological
 
     @classmethod
-    def get_disparity(cls, price: Series, day: int) -> Series:
-        sma = cls.get_sma(price, day)
-        disparity = price.divide(sma)
-
+    def get_disparity(cls, price: Series, day: int, criteria: str = 'sma') -> Series:
+        if criteria == 'sma':
+            moving_average = cls.get_sma(price, day)
+        elif criteria == 'ema':
+            moving_average = cls.get_ema(price, day)
+        elif criteria == 'wma':
+            moving_average = cls.get_wma(price, day)
+        disparity = price.divide(moving_average)
         return disparity
+
+    @classmethod
+    def get_dmi(cls, high: Series, low: Series, close: Series, day: int) -> Tuple[Series, Series]:
+        data = {'range': abs(high - low), 'up': abs(high - close.shift(1)), 'down': abs(close.shift(1) - low)}
+        data = DataFrame(data, columns=['range', 'up', 'down'])
+
+        tr = data.max(axis=1)
+
+        pdm = np.where(((high.diff(1) > 0) & (high.diff(1) > low.shift(1) - low)), high.diff(1), 0)
+        pdm = cls.get_ema(Series(pdm), day)
+        mdm = np.where((((low.shift(1) - low) > 0) & (high.diff(1) < (low.shift(1) - low))), low.shift(1) - low, 0)
+        mdm = cls.get_ema(Series(mdm), day)
+
+        div = cls.get_ema(tr, day)
+
+        pdi = pdm.divide(div)
+        mdi = mdm.divide(div)
+        dx = abs(pdi - mdi).divide(pdi + mdi)
+        adx = cls.get_ema(dx, day)
+        return pdi, mdi, adx
+
+    @staticmethod
+    def get_price_channel(high: Series, low: Series, day: int) -> Tuple[Series, Series]:
+
+        resistance_line = high.shift(1).rolling(window=day).max()
+        support_line = low.shift(1).rolling(window=day).min()
+        return resistance_line, support_line
+
+    @classmethod
+    def get_macd(cls, price: Series, day_short: int, day_long: int, criteria: str = 'ewma') -> Series:
+        if criteria == 'sma':
+            short_term = cls.get_sma(price, day_short)
+            long_term = cls.get_sma(price, day_long)
+        elif criteria == 'ema':
+            short_term = cls.get_ema(price, day_short)
+            long_term = cls.get_ema(price, day_long)
+        elif criteria == 'ewma':
+            short_term = cls.get_ewma(price, day_short)
+            long_term = cls.get_ewma(price, day_long)
+        elif criteria == 'wma':
+            short_term = cls.get_wma(price, day_short)
+            long_term = cls.get_wma(price, day_long)
+
+        macd = short_term - long_term
+        return macd
+
+    @classmethod
+    def get_macd_osillator(cls, price: Series, day_short: int, day_long: int, day_signal: int, criteria: str = 'ewma') -> Series:
+        macd = cls.get_macd(price, day_short, day_long, criteria)
+        if criteria == 'sma':
+            signal = cls.get_sma(macd, day_signal)
+        elif criteria == 'ema':
+            signal = cls.get_ema(macd, day_signal)
+        elif criteria == 'ewma':
+            signal = cls.get_ewma(macd, day_signal)
+        elif criteria == 'wma':
+            signal = cls.get_wma(macd, day_signal)
+
+        macd_osillator = macd - signal
+        return macd_osillator
