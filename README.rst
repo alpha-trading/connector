@@ -36,4 +36,8 @@ Version up
 
 Run command after edit pyproject.toml's version
 ``shell script
-$ make setup``
+$ make setup
+$ git add pyproject.toml
+$ git add setup.py
+$ git commit
+$ git push origin master``
