@@ -4,6 +4,14 @@ from typing import Tuple
 import pandas as pd
 from pandas import DataFrame, Series
 import numpy as np
+from enum import Enum
+
+
+class Criteria(Enum):
+    sma = 1
+    ema = 2
+    ewma = 3
+    wma = 4
 
 
 class Indicator:
@@ -34,8 +42,6 @@ class Indicator:
         down = np.where(price.diff(1).lt(0), price.diff(1).multiply(-1), 0)
         average_up = Series(up).rolling(window=day, min_periods=day).mean()
         average_down = Series(down).rolling(window=day, min_periods=day).mean()
-        # average_up = Series(up).rolling(window=day).mean()
-        # average_down = Series(down).rolling(window=day).mean()
         return average_up.div(average_down + average_up)
 
     @staticmethod
@@ -47,34 +53,30 @@ class Indicator:
         return price.rolling(window=day).std(ddof=ddof)
 
     @classmethod
-    def get_bollinger(cls, price: Series, day: int, r: int, criteria: str = 'ema') -> Tuple[Series, Series]:
-        if criteria == 'sma':
+    def get_bollinger(cls, price: Series, day: int, r: int, criteria: Criteria = Criteria.ema) -> Tuple[Series, Series]:
+        if criteria == Criteria.sma:
             line_mid = cls.get_sma(price, day)
-            line_std = cls.get_stddev(price, day, ddof=0)
-        elif criteria == 'ema':
+        elif criteria == Criteria.ema:
             line_mid = cls.get_ema(price, day)
-            line_std = cls.get_stddev(price, day, ddof=0)
-        elif criteria == 'ewma':
+        elif criteria == Criteria.ewma:
             line_mid = cls.get_ewma(price, day)
-            line_std = cls.get_stddev(price, day, ddof=0)
-        elif criteria == 'wma':
+        elif criteria == Criteria.wma:
             line_mid = cls.get_wma(price, day)
-            line_std = cls.get_stddev(price, day, ddof=0)
-
+        line_std = cls.get_stddev(price, day, ddof=0)
         bollinger_range = line_std.multiply(r)
         upper = line_mid + bollinger_range
         lower = line_mid - bollinger_range
         return upper, lower
 
     @classmethod
-    def get_envelope(cls, price: Series, day: int, r: float, criteria: str = 'ema') -> Tuple[Series, Series]:
-        if criteria == 'sma':
+    def get_envelope(cls, price: Series, day: int, r: float, criteria: Criteria = Criteria.ema) -> Tuple[Series, Series]:
+        if criteria == Criteria.sma:
             line_mid = Indicator.get_sma(price, day)
-        elif criteria == 'ema':
+        elif criteria == Criteria.ema:
             line_mid = Indicator.get_ema(price, day)
-        elif criteria == 'ewma':
+        elif criteria == Criteria.ewma:
             line_mid = Indicator.get_ewma(price, day)
-        elif criteria == 'wma':
+        elif criteria == Criteria.wma:
             line_mid = Indicator.get_wma(price, day)
 
         envelope_range = line_mid.multiply(r)
@@ -105,14 +107,14 @@ class Indicator:
         return sum_up.div(sum_down)
 
     @classmethod
-    def get_range(cls, high: Series, low: Series, day: int, criteria: str = 'sma') -> Series:
-        if criteria == 'sma':
+    def get_range(cls, high: Series, low: Series, day: int, criteria: Criteria = Criteria.sma) -> Series:
+        if criteria == Criteria.sma:
             day_range = cls.get_sma(high - low, day)
-        elif criteria == 'ema':
+        elif criteria == Criteria.ema:
             day_range = cls.get_ema(high - low, day)
-        elif criteria == 'ewma':
+        elif criteria == Criteria.ewma:
             day_range = cls.get_ewma(high - low, day)
-        elif criteria == 'wma':
+        elif criteria == Criteria.wma:
             day_range = cls.get_wma(high - low, day)
         return day_range
 
@@ -161,12 +163,12 @@ class Indicator:
         return psychological
 
     @classmethod
-    def get_disparity(cls, price: Series, day: int, criteria: str = 'sma') -> Series:
-        if criteria == 'sma':
+    def get_disparity(cls, price: Series, day: int, criteria: Criteria = Criteria.sma) -> Series:
+        if criteria == Criteria.sma:
             moving_average = cls.get_sma(price, day)
-        elif criteria == 'ema':
+        elif criteria == Criteria.ema:
             moving_average = cls.get_ema(price, day)
-        elif criteria == 'wma':
+        elif criteria == Criteria.wma:
             moving_average = cls.get_wma(price, day)
         disparity = price.divide(moving_average)
         return disparity
@@ -199,17 +201,17 @@ class Indicator:
         return resistance_line, support_line
 
     @classmethod
-    def get_macd(cls, price: Series, day_short: int, day_long: int, criteria: str = 'ewma') -> Series:
-        if criteria == 'sma':
+    def get_macd(cls, price: Series, day_short: int, day_long: int, criteria: Criteria = Criteria.ewma) -> Series:
+        if criteria == Criteria.sma:
             short_term = cls.get_sma(price, day_short)
             long_term = cls.get_sma(price, day_long)
-        elif criteria == 'ema':
+        elif criteria == Criteria.ema:
             short_term = cls.get_ema(price, day_short)
             long_term = cls.get_ema(price, day_long)
-        elif criteria == 'ewma':
+        elif criteria == Criteria.ewma:
             short_term = cls.get_ewma(price, day_short)
             long_term = cls.get_ewma(price, day_long)
-        elif criteria == 'wma':
+        elif criteria == Criteria.wma:
             short_term = cls.get_wma(price, day_short)
             long_term = cls.get_wma(price, day_long)
 
@@ -217,15 +219,15 @@ class Indicator:
         return macd
 
     @classmethod
-    def get_macd_osillator(cls, price: Series, day_short: int, day_long: int, day_signal: int, criteria: str = 'ewma') -> Series:
+    def get_macd_osillator(cls, price: Series, day_short: int, day_long: int, day_signal: int, criteria: Criteria = Criteria.ewma) -> Series:
         macd = cls.get_macd(price, day_short, day_long, criteria)
-        if criteria == 'sma':
+        if criteria == Criteria.sma:
             signal = cls.get_sma(macd, day_signal)
-        elif criteria == 'ema':
+        elif criteria == Criteria.ema:
             signal = cls.get_ema(macd, day_signal)
-        elif criteria == 'ewma':
+        elif criteria == Criteria.ewma:
             signal = cls.get_ewma(macd, day_signal)
-        elif criteria == 'wma':
+        elif criteria == Criteria.wma:
             signal = cls.get_wma(macd, day_signal)
 
         macd_osillator = macd - signal
