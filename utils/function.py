@@ -1,6 +1,14 @@
 from enum import Enum
-import pandas as pd
 from pandas import Series, DataFrame
+import numpy as np
+from sklearn.linear_model import LinearRegression
+
+
+def linear_regression(x, y):
+    linear = LinearRegression()
+    model = linear.fit(x, y)
+    coef = model.coef_
+    return coef
 
 
 class Method(Enum):
@@ -92,7 +100,11 @@ class Function:
 
     @staticmethod
     def get_ts_regression(value: Series, day: int) -> Series:
-        pass
+        ts_regression = value.rolling(window=day, min_periods=day).apply(
+            lambda x: linear_regression([[x_val] for x_val in np.arange(1, day + 1)],
+                                        [[(y_val - Series(x).values[0]) / Series(x).values[0] * 100]
+                                         for y_val in Series(x).values]))
+        return ts_regression
 
     @staticmethod
     def get_correlation():
