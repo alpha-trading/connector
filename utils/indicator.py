@@ -368,6 +368,26 @@ class Indicator:
         return (close - low) / (high - low)
 
     @classmethod
+    def get_mass_index(cls, high: Series, low: Series, period: int, criteria: Criteria = Criteria.ewma):
+        day_range = cls.get_range(high, low, 1)
+
+        if criteria == Criteria.sma:
+            single = cls.get_sma(day_range, 9)
+            double = cls.get_sma(single, 9)
+        elif criteria == Criteria.ema:
+            single = cls.get_ema(day_range, 9)
+            double = cls.get_ema(single, 9)
+        elif criteria == Criteria.ewma:
+            single = cls.get_ewma(day_range, 9)
+            double = cls.get_ewma(single, 9)
+        elif criteria == Criteria.wma:
+            single = cls.get_wma(day_range, 9)
+            double = cls.get_wma(single, 9)
+        ratio = single / double
+
+        return ratio.rolling(window=period).sum()
+
+    @classmethod
     def get_range(cls, high: Series, low: Series, day: int, criteria: Criteria = Criteria.sma) -> Series:
         """
         Range를 구하는 함수
