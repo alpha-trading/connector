@@ -269,6 +269,22 @@ class Indicator:
         average_down = Series(down).rolling(window=day, min_periods=day).mean()
         return average_up.div(average_down + average_up)
 
+    @classmethod
+    def get_stochastic_fast(cls, high: Series, low: Series, close: Series, fast_k_period: int, fast_d_period: int,
+                            criteria: Criteria = Criteria.ema):
+        percent_k = ((close - low.rolling(window=fast_k_period).min()) / (high.rolling(window=fast_k_period).max()
+                                                                          - low.rolling(window=fast_k_period).min()))
+        if criteria == Criteria.sma:
+            percent_d = cls.get_sma(percent_k, fast_d_period)
+        elif criteria == Criteria.ema:
+            percent_d = cls.get_ema(percent_k, fast_d_period)
+        elif criteria == Criteria.ewma:
+            percent_d = cls.get_ewma(percent_k, fast_d_period)
+        elif criteria == Criteria.wma:
+            percent_d = cls.get_wma(percent_k, fast_d_period)
+
+        return percent_k, percent_d
+
     @staticmethod
     def get_volume_ratio(close: Series, volume: Series, day: int) -> Series:
         """
