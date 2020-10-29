@@ -369,6 +369,17 @@ class Indicator:
 
     @classmethod
     def get_mass_index(cls, high: Series, low: Series, period: int, criteria: Criteria = Criteria.ewma):
+        """
+        Mass Index를 구하는 함수
+        고가와 저가 사이의 변동폭을 측정하여 단기적인 추세의 전환점을 찾아내는 지표이다.
+        Mass Index가 27선을 넘어선 후 26.5선을 하향 돌파하는 것을 reversal bulge라고 하는데,
+        reversal bulge는 단기적인 추세의 전환을 암시한다.
+        :param high: 고가
+        :param low: 저가
+        :param period: 합하고자 하는 일 수
+        :param criteria: 이동평균의 종류 (일반적으로 지수가중이동평균을 이용)
+        :return: N일간 Mass Index
+        """
         day_range = cls.get_range(high, low, 1)
 
         if criteria == Criteria.sma:
