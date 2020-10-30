@@ -273,6 +273,7 @@ class Indicator:
     def get_stochastic_fast(cls, high: Series, low: Series, close: Series, fast_k_period: int, fast_d_period: int,
                             criteria: Criteria = Criteria.ema) -> Tuple[Series, Series]:
         """
+        Stochastic Fast 구하는 함수
         Stochastic은 적용기간 중에 움직인 가격 범위에서 오늘의 시장가격이 상대적으로 어디에 위치하고 있는지를 알려주는 지표로써,
         시장가격이 상승추세에 있다면 현재가격은 최고가 부근에 위치할 가능성이 높고,
         하락추세에 있다면 현재가는 최저가 부근에서 형성될 가능성이 높다는 것에 착안하여 만들어진 지표이다.
@@ -282,20 +283,20 @@ class Indicator:
         :param fast_k_period: k기간
         :param fast_d_period: d기간
         :param criteria: 이동평균선 종류 (일반적으로 지수이평선을 사용)
-        :return: Fast %K, %D
+        :return: k_value, d_value (K: Stochastic Fast, D: Stochastic Fast를 이동평균한 값)
         """
-        percent_k = ((close - low.rolling(window=fast_k_period).min()) / (high.rolling(window=fast_k_period).max()
+        k_value = ((close - low.rolling(window=fast_k_period).min()) / (high.rolling(window=fast_k_period).max()
                                                                           - low.rolling(window=fast_k_period).min()))
         if criteria == Criteria.sma:
-            percent_d = cls.get_sma(percent_k, fast_d_period)
+            d_value = cls.get_sma(k_value, fast_d_period)
         elif criteria == Criteria.ema:
-            percent_d = cls.get_ema(percent_k, fast_d_period)
+            d_value = cls.get_ema(k_value, fast_d_period)
         elif criteria == Criteria.ewma:
-            percent_d = cls.get_ewma(percent_k, fast_d_period)
+            d_value = cls.get_ewma(k_value, fast_d_period)
         elif criteria == Criteria.wma:
-            percent_d = cls.get_wma(percent_k, fast_d_period)
+            d_value = cls.get_wma(k_value, fast_d_period)
 
-        return percent_k, percent_d
+        return k_value, d_value
 
     @staticmethod
     def get_volume_ratio(close: Series, volume: Series, day: int) -> Series:
