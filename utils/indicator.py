@@ -397,6 +397,28 @@ class Indicator:
         return (close - low) / (high - low)
 
     @classmethod
+    def get_ab_ratio(cls, open: Series, high: Series, low: Series, close: Series, period: int) -> Tuple[Series, Series]:
+        """
+        AB Ratio를 구하는 함수
+        AB Ratio는 주가 변동을 이용하여 강,약 에너지를 파악하고 이를 통해 주가의 움직임을 예측하는 지표이다.
+        :param open: 시가
+        :param high: 고가
+        :param low: 저가
+        :param close: 종가
+        :param period: 기간
+        :return: N일간의 AB Ratio
+        """
+        strength = high - open
+        weakness = open - low
+        a_ratio = (strength.rolling(window=period).sum() / weakness.rolling(window=period).sum())
+
+        strength = high - close.shift(1)
+        weakness = close.shift(1) - low
+        b_ratio = (strength.rolling(window=period).sum() / weakness.rolling(window=period).sum())
+
+        return a_ratio, b_ratio
+
+    @classmethod
     def get_mass_index(cls, high: Series, low: Series, period: int, criteria: Criteria = Criteria.ewma) -> Series:
         """
         Mass Index를 구하는 함수
