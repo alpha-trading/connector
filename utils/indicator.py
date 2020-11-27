@@ -474,3 +474,23 @@ class Indicator:
             day_range = cls.get_wma(price_high - price_low, day)
         return day_range
 
+    @classmethod
+    def get_mao(cls, price_close: Series, short_period: int, long_period: int, criteria: Criteria = Criteria.sma):
+        """
+        MAO를 구하는 함수
+        MAO는 단기 이동 평균 값과 장기 이동 평균 값의 차이를 나타내어 주가 추세를 판단하기 위한 지표이다.
+        :param price_close: 종가
+        :param short_period: 단기 이동 평균 기간
+        :param long_period: 장기 이동 평균 기간
+        :param criteria: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
+        :return:
+        """
+        if criteria == Criteria.sma:
+            mao = cls.get_sma(price_close, short_period) - Indicator.get_sma(price_close, long_period)
+        elif criteria == Criteria.ema:
+            mao = cls.get_ema(price_close, short_period) - Indicator.get_ema(price_close, long_period)
+        elif criteria == Criteria.ewma:
+            mao = cls.get_ewma(price_close, short_period) - Indicator.get_ewma(price_close, long_period)
+        elif criteria == Criteria.wma:
+            mao = cls.get_wma(price_close, short_period) - Indicator.get_wma(price_close, long_period)
+        return mao
