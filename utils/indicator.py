@@ -475,7 +475,7 @@ class Indicator:
         return day_range
 
     @classmethod
-    def get_mao(cls, price_close: Series, short_period: int, long_period: int, criteria: Criteria = Criteria.sma):
+    def get_mao(cls, price_close: Series, short_period: int, long_period: int, criteria: Criteria = Criteria.sma) -> Series:
         """
         MAO를 구하는 함수
         MAO는 단기 이동 평균 값과 장기 이동 평균 값의 차이를 나타내어 주가 추세를 판단하기 위한 지표이다.
