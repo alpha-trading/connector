@@ -507,7 +507,7 @@ class Indicator:
         :param moving_average_period: 이동평균 기간
         :param sonar_period: SONAR 기간
         :param sonar_moving_average_period: SONAR 이동평균 기간
-        :param criteria: 이동평균의 종류
+        :param criteria: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
         :return:
         """
         if criteria == Criteria.sma:
@@ -531,3 +531,36 @@ class Indicator:
             signal = cls.get_wma(sonar, sonar_moving_average_period)
 
         return sonar, signal
+
+    @classmethod
+    def get_trix(cls, price_close: Series, period: int, signal_period: int, criteria: Criteria = Criteria.ema) \
+            -> Tuple[Series, Series]:
+        """
+        tirx를 구하는 함수
+        :param price_close: 종가
+        :param period: 이동평균 기간
+        :param signal_period: 시그널 기간
+        :param criteria: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
+        :return:
+        """
+        if criteria == Criteria.sma:
+            ma3 = cls.get_sma(cls.get_sma(cls.get_sma(price_close, period), period), period)
+        elif criteria == Criteria.ema:
+            ma3 = cls.get_ema(cls.get_ema(cls.get_ema(price_close, period), period), period)
+        elif criteria == Criteria.ewma:
+            ma3 = cls.get_ewma(cls.get_ewma(cls.get_ewma(price_close, period), period), period)
+        elif criteria == Criteria.wma:
+            ma3 = cls.get_wma(cls.get_wma(cls.get_wma(price_close, period), period), period)
+
+        trix = ma3.diff(1) / ma3.shift(1)
+
+        if criteria == Criteria.sma:
+            signal = cls.get_sma(trix, signal_period)
+        elif criteria == Criteria.ema:
+            signal = cls.get_ema(trix, signal_period)
+        elif criteria == Criteria.ewma:
+            signal = cls.get_ewma(trix, signal_period)
+        elif criteria == Criteria.wma:
+            signal = cls.get_wma(trix, signal_period)
+
+        return trix, signal
