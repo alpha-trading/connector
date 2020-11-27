@@ -1,4 +1,5 @@
 from typing import Optional
+from enum import Enum
 
 from utils import Executor
 from datetime import date
@@ -6,6 +7,12 @@ from pandas import DataFrame
 
 TABLE_RAW_CANDLE_DAY = 'data_candleday'
 TABLE_EDITED_CANDLE_DAY = 'data_editedcandleday'
+
+
+class ExchangeRateEnum(Enum):
+    dollar = 'USDKRW'
+    euro = 'EURKRW'
+    yen = 'JPYKRW'
 
 
 class Generator:
@@ -124,12 +131,12 @@ class Generator:
 
         return df
 
-    def get_won_dollar_exchange_rate(self) -> DataFrame:
+    def get_exchange_rate(self, exchange_index: ExchangeRateEnum) -> DataFrame:
         """
-        원 달러 환율 조회
-        :return: 원 달러 환율 반환
+        달러, 유로, 엔 환율 조회
+        :param exchange_index:
+        :return:
         """
-        query = f"SELECT * FROM data_wondollarexchangerate"
+        query = f"SELECT * FROM data_exchangeratecandleday WHERE ticker='{exchange_index.value}'"
         df = self.executor.sql(query)
-
         return df
