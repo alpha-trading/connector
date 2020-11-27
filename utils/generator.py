@@ -36,7 +36,7 @@ class Generator:
         past_universe_stock_list = df['ticker'].to_list()
         return past_universe_stock_list
 
-    def _get_day_price_data(self, universe: str, table_name: str) -> dict:
+    def __get_day_price_data(self, universe: str, table_name: str) -> dict:
         day_price = {}
         past_universe_stock_list = self.get_past_universe_stock_list(universe)
         for ticker in past_universe_stock_list:
@@ -55,7 +55,7 @@ class Generator:
         :param universe: kospi200 또는 kosdaq150
         :return: 일봉 데이터
         """
-        return self._get_day_price_data(universe, TABLE_RAW_CANDLE_DAY)
+        return self.__get_day_price_data(universe, TABLE_RAW_CANDLE_DAY)
 
     def get_edited_day_price_data(self, universe: str) -> dict:
         """
@@ -63,7 +63,31 @@ class Generator:
         :param universe:
         :return: 일봉 데이터
         """
-        return self._get_day_price_data(universe, TABLE_EDITED_CANDLE_DAY)
+        return self.__get_day_price_data(universe, TABLE_EDITED_CANDLE_DAY)
+
+    def __get_day_price_data_by_ticker(self, ticker, table_name):
+        query = f"SELECT candle.*, ticker.ticker FROM {table_name} " \
+                f"AS candle INNER JOIN data_ticker AS ticker ON ticker.id = candle.ticker_id " \
+                f"WHERE ticker = '{ticker}'"
+        df = self.executor.sql(query)
+        df = df.drop(['id', 'ticker_id', 'ticker'], axis=1)
+        return df
+
+    def get_day_price_data_by_ticker(self, ticker):
+        """
+        universe에 포함된 종목들의 수정 주가 일봉 데이터 반환
+        :param ticker: 개별 종목의 ticker
+        :return: 해당 ticker의 일봉 데이터
+        """
+        return self.__get_day_price_data_by_ticker(ticker, TABLE_RAW_CANDLE_DAY)
+
+    def get_edited_day_price_data(self, ticker):
+        """
+        universe에 포함된 종목들의 수정 주가 일봉 데이터 반환
+        :param ticker: 개별 종목의 ticker
+        :return: 해당 ticker의 일봉 데이터
+        """
+        return self.__get_edited_day_price_data_by_ticker(ticker, TABLE_EDITED_CANDLE_DAY)
 
     def get_today_universe_stock_list(self, universe: str, today: date) -> list:
         """
