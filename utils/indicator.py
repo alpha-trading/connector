@@ -408,7 +408,7 @@ class Indicator:
         :param price_open: 시가
         :param price_high: 고가
         :param price_low: 저가
-        :param close: 종가
+        :param price_close: 종가
         :param period: 기간
         :return: N일간의 AB Ratio
         """
