@@ -494,3 +494,40 @@ class Indicator:
         elif criteria == Criteria.wma:
             mao = cls.get_wma(price_close, short_period) - Indicator.get_wma(price_close, long_period)
         return mao
+
+    @classmethod
+    def get_sonar(cls, price_close: Series, moving_average_period: int, sonar_period: int,
+                  sonar_moving_average_period: int, criteria: Criteria = Criteria.ema) -> Tuple[Series, Series]:
+        """
+        sonar를 구하는 함수
+        sonar는 주가의 추세 전환 시점을 파악하기 위한 지표이다.
+        sonar는 가격 움직임에 선행하여 추세전환을 암시한다.
+        예를 들어, 지표값이 0선을 상향 돌파할 때 매수시점으로, 0선을 하향돌파할 때 매도시점으로 인식한다.
+        :param price_close: 종가
+        :param moving_average_period: 이동평균 기간
+        :param sonar_period: SONAR 기간
+        :param sonar_moving_average_period: SONAR 이동평균 기간
+        :param criteria: 이동평균의 종류
+        :return:
+        """
+        if criteria == Criteria.sma:
+            sonar_moving_average = cls.get_sma(price_close, moving_average_period)
+        elif criteria == Criteria.ema:
+            sonar_moving_average = cls.get_ema(price_close, moving_average_period)
+        elif criteria == Criteria.ewma:
+            sonar_moving_average = cls.get_ewma(price_close, moving_average_period)
+        elif criteria == Criteria.wma:
+            sonar_moving_average = cls.get_wma(price_close, moving_average_period)
+
+        sonar = sonar_moving_average - sonar_moving_average.shift(sonar_period)
+
+        if criteria == Criteria.sma:
+            signal = cls.get_sma(sonar, sonar_moving_average_period)
+        elif criteria == Criteria.ema:
+            signal = cls.get_ema(sonar, sonar_moving_average_period)
+        elif criteria == Criteria.ewma:
+            signal = cls.get_ewma(sonar, sonar_moving_average_period)
+        elif criteria == Criteria.wma:
+            signal = cls.get_wma(sonar, sonar_moving_average_period)
+
+        return sonar, signal
