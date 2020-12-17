@@ -63,6 +63,14 @@ class Function:
         return pct_change
 
     @staticmethod
+    def get_sigmoid(value: Series) -> Series:
+        return 1 / (1 + np.exp(-value))
+
+    @staticmethod
+    def get_tanh(value: Series) -> Series:
+        return np.tanh(value)
+
+    @staticmethod
     def get_ts_rank(value: Series, day: int, method: Method = Method.average) -> Series:
         """
             method{‘average’, ‘min’, ‘max’, ‘first’, ‘dense’}, default ‘average’
