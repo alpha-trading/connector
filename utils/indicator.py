@@ -161,7 +161,7 @@ class Indicator:
         return resistance_line, support_line
 
     @classmethod
-    def get_dmi(cls, price_high: Series, price_low: Series, price_close: Series, day: int) -> Tuple[Series, Series]:
+    def get_dmi(cls, price_high: Series, price_low: Series, price_close: Series, day: int) -> Tuple[Series, Series, Series]:
         """
         DMI를 구하는 함수
         DMI는 현재 시장의 추세와 강도를 함께 나타내는 지표로 단기보다는 중장기 추세분석에 유리하다.
