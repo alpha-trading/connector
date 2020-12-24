@@ -22,19 +22,24 @@ class Method(Enum):
 class Function:
 
     @staticmethod
-    def get_max(value: Series, day: int) -> Series:
+    def get_ts_sum(value: Series, day: int) -> Series:
+        ts_sum = value.rolling(window=day, min_periods=day).sum()
+        return ts_sum
+
+    @staticmethod
+    def get_ts_max(value: Series, day: int) -> Series:
         max_value = value.rolling(window=day, min_periods=day).apply(
             lambda x: Series(x).max())
         return Series(max_value)
 
     @staticmethod
-    def get_min(value: Series, day: int) -> Series:
+    def get_ts_min(value: Series, day: int) -> Series:
         min_value = value.rolling(window=day, min_periods=day).apply(
             lambda x: Series(x).min())
         return Series(min_value)
 
     @staticmethod
-    def get_median(value: Series, day: int) -> Series:
+    def get_ts_median(value: Series, day: int) -> Series:
         median = value.rolling(window=day, min_periods=day).apply(
             lambda x: Series(x).median())
         return median
