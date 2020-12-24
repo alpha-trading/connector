@@ -533,7 +533,7 @@ class Indicator:
         return sonar, signal
 
     @staticmethod
-    def get_mfi(high: Series, low: Series, close: Series, vol: Series, day: int):
+    def get_mfi(high: Series, low: Series, close: Series, vol: Series, day: int) -> Series:
 
         typical_price = (high + low + close) / 3
         money_flow = vol * typical_price
