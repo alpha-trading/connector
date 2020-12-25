@@ -533,9 +533,9 @@ class Indicator:
         return sonar, signal
 
     @staticmethod
-    def get_mfi(high: Series, low: Series, close: Series, vol: Series, day: int) -> Series:
+    def get_mfi(price_high: Series, price_low: Series, price_close: Series, vol: Series, day: int) -> Series:
 
-        typical_price = (high + low + close) / 3
+        typical_price = (price_high + price_low + price_close) / 3
         money_flow = vol * typical_price
 
         positive_money_flow = np.where(typical_price.diff(1) > 0, money_flow, 0)
