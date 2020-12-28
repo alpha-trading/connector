@@ -532,6 +532,22 @@ class Indicator:
 
         return sonar, signal
 
+    @staticmethod
+    def get_mfi(price_high: Series, price_low: Series, price_close: Series, vol: Series, day: int) -> Series:
+
+        typical_price = (price_high + price_low + price_close) / 3
+        money_flow = vol * typical_price
+
+        positive_money_flow = np.where(typical_price.diff(1) > 0, money_flow, 0)
+        positive_money_flow = Series(positive_money_flow).rolling(window=day, min_periods=day).sum()
+        negative_money_flow = np.where(typical_price.diff(1) < 0, money_flow, 0)
+        negative_money_flow = Series(negative_money_flow).rolling(window=day, min_periods=day).sum()
+
+        money_flow_ratio = positive_money_flow / negative_money_flow
+        mfi = money_flow_ratio / (1 + money_flow_ratio)
+
+        return mfi
+
     @classmethod
     def get_trix(cls, price_close: Series, period: int, signal_period: int, criteria: Criteria = Criteria.ema) \
             -> Tuple[Series, Series]:
