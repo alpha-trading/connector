@@ -1,5 +1,5 @@
 from enum import Enum
-from pandas import Series, DataFrame
+from pandas import Series, DataFrame, merge
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
@@ -118,6 +118,25 @@ class Function:
                                         [[(y_val - Series(x).values[0]) / Series(x).values[0] * 100]
                                          for y_val in Series(x).values]))
         return ts_regression
+
+    @staticmethod
+    def get_ts_correlation(lhs_value: DataFrame, rhs_value: DataFrame, window_size: int):
+        merged = merge(left=lhs_value, right=rhs_value, how='outer', on='date', sort=True, suffixes=["-lhs", "-rhs"])
+        total_value = DataFrame(merged["date"])
+
+        lhs_roll = merged['close-lhs'].rolling(window_size)
+        rhs_roll = merged['close-rhs'].rolling(window_size)
+        rhs_iterator = iter(rhs_roll)
+        correlation_list = list()
+        for lhs in lhs_roll:
+            rhs = next(rhs_iterator)
+            correlation_list.append(lhs.corr(rhs))
+
+        total_value['correlation'] = correlation_list
+
+        lhs = merge(lhs_value, total_value, on='date')
+        rhs = merge(rhs_value, total_value, on='date')
+        return lhs, rhs
 
     @staticmethod
     def get_correlation():
