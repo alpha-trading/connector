@@ -225,7 +225,7 @@ class Generator:
 
         data_index_candle = Table('data_indexcandleday')
         query = MySQLQuery.from_(data_index_candle).select('*').where(Criterion.all([
-            data_index_candle.ticer == universe,
+            data_index_candle.ticker == universe,
             data_index_candle.date >= start_date,
             data_index_candle.date <= end_date
         ]))
