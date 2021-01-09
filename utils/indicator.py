@@ -399,6 +399,40 @@ class Indicator:
         """
         return (price_close - price_low) / (price_high - price_low)
 
+    @staticmethod
+    def get_head_ratio(price_open: Series, price_high: Series, price_low: Series, price_close: Series) -> Series:
+        """
+        윗꼬리 비율을 구하는 함수
+        :param price_open: 시가
+        :param price_high: 고가
+        :param price_low: 저가
+        :param price_close: 종가
+        :return: 윗꼬리 비율
+        """
+
+        price_upper = np.where(price_open >= price_open, price_open, price_close)
+        price_upper = Series(price_upper)
+
+        head_ratio = (price_high - price_upper) / (price_high - price_low)
+        return head_ratio
+
+    @staticmethod
+    def get_tail_ratio(price_open: Series, price_high: Series, price_low: Series, price_close: Series) -> Series:
+        """
+        아래꼬리 비율을 구하는 함수
+        :param price_open: 시가
+        :param price_high: 고가
+        :param price_low: 저가
+        :param price_close: 종가
+        :return: 아래꼬리 비율
+        """
+
+        price_under = np.where(price_open >= price_open, price_close, price_open)
+        price_under = Series(price_under)
+
+        tail_ratio = (price_under - price_low) / (price_high - price_low)
+        return tail_ratio
+
     @classmethod
     def get_ab_ratio(cls, price_open: Series, price_high: Series, price_low: Series, price_close: Series, period: int) \
         -> Tuple[Series, Series]:
