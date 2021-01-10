@@ -1,7 +1,8 @@
-from enum import Enum
 from pandas import Series, DataFrame, merge
 import numpy as np
 from sklearn.linear_model import LinearRegression
+
+from utils.parameter import KindOfAverage
 
 
 def linear_regression(x, y):
@@ -9,14 +10,6 @@ def linear_regression(x, y):
     model = linear.fit(x, y)
     coef = model.coef_
     return coef
-
-
-class Method(Enum):
-    average = 1
-    min = 2
-    max = 3
-    first = 4
-    dense = 5
 
 
 class Function:
@@ -76,7 +69,7 @@ class Function:
         return np.tanh(value)
 
     @staticmethod
-    def get_ts_rank(value: Series, day: int, method: Method = Method.average) -> Series:
+    def get_ts_rank(value: Series, day: int, method: KindOfAverage = KindOfAverage.average) -> Series:
         """
             method{‘average’, ‘min’, ‘max’, ‘first’, ‘dense’}, default ‘average’
             How to rank the group of records that have the same value (i.e. ties):

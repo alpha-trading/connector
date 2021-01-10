@@ -1,19 +1,13 @@
 from pypika import MySQLQuery, Table, Tables, Criterion
 from typing import Optional
-from enum import Enum
 
 from utils import Executor
 from datetime import date
 from pandas import DataFrame
+from utils.parameter import Universe, ExchangeRate  # pip시에도 이렇게 하는것이 맞는지 질문!
 
 TABLE_RAW_CANDLE_DAY = 'data_candleday'
 TABLE_EDITED_CANDLE_DAY = 'data_editedcandleday'
-
-
-class ExchangeRateEnum(Enum):
-    dollar = 'USDKRW'
-    euro = 'EURKRW'
-    yen = 'JPYKRW'
 
 
 class Generator:
@@ -38,38 +32,38 @@ class Generator:
         trading_day_list = df['date'].to_list()
         return trading_day_list
 
-    def get_past_universe_stock_list(self, universe: str) -> list:
+    def get_past_universe_stock_list(self, universe: Universe) -> list:
         """
         과거에 한번이라도 universe에 포함된 종목 리스트 반환
         :param universe: kospi, kosdaq, kospi200, kosdaq150, top2000, top350(kospi200과 kosdaq150)
         :return: universe에 포함되었던 종목 리스트 반환
         """
-        if universe in ('total', 'kospi', 'kosdaq'):
+        if universe in (Universe.total, Universe.kospi, Universe.kosdaq):
             data_ticker = Table('data_ticker')
-            if universe == 'total':
+            if universe == Universe.total:
                 query = MySQLQuery.from_(data_ticker).groupby(data_ticker.ticker).select('*')
             else:
                 query = MySQLQuery.from_(data_ticker).groupby(data_ticker.id).having(
-                    data_ticker.market == universe).select('*')
+                    data_ticker.market == universe.name).select('*')
             df = self.executor.sql(query.get_sql())
             past_universe_stock_list = df['ticker'].to_list()
 
             return past_universe_stock_list
 
-        elif universe in ('top350', 'kospi200', 'kosdaq150'):
-            if universe == 'top350':
-                kospi200_past_universe_stock_list = self.get_past_universe_stock_list('kospi200')
-                kosdaq150_past_universe_stock_list = self.get_past_universe_stock_list('kosdaq150')
+        elif universe in (Universe.top350, Universe.kospi200, Universe.kosdaq150):
+            if universe == Universe.top350:
+                kospi200_past_universe_stock_list = self.get_past_universe_stock_list(Universe.kospi200.name)
+                kosdaq150_past_universe_stock_list = self.get_past_universe_stock_list(Universe.kosdaq150.name)
                 return kospi200_past_universe_stock_list + kosdaq150_past_universe_stock_list
-            elif universe in ('kospi200', 'kosdaq150'):
-                data_kospi200 = Table(f'data_{universe}')
-                query = MySQLQuery.from_(data_kospi200).groupby(data_kospi200.ticker_id).select(
-                    data_kospi200.ticker_id)
+            elif universe in (Universe.kospi200, Universe.kosdaq150):
+                data_universe = Table(f'data_{universe.name}')
+                query = MySQLQuery.from_(data_universe).groupby(data_universe.ticker_id).select(
+                    data_universe.ticker_id)
                 df = self.executor.sql(query.get_sql())
                 past_universe_stock_list = df['ticker_id'].to_list()
                 return past_universe_stock_list
 
-    def __get_day_price_data(self, universe: str, table_name: str, trading_share: bool, trading_trend: bool,
+    def __get_day_price_data(self, universe: Universe, table_name: str, trading_share: bool, trading_trend: bool,
                              start_date: date, end_date: date) -> dict:
 
         past_universe_stock_list = self.get_past_universe_stock_list(universe)
@@ -105,7 +99,7 @@ class Generator:
         df = df.drop(['id'], axis=1)
         return df
 
-    def get_day_price_data(self, universe: str, trading_share: bool, trading_trend: bool,
+    def get_day_price_data(self, universe: Universe, trading_share: bool, trading_trend: bool,
                            start_date: date, end_date: date) -> dict:
 
         """
@@ -120,7 +114,7 @@ class Generator:
         return self.__get_day_price_data(universe, TABLE_RAW_CANDLE_DAY, trading_share, trading_trend,
                                          start_date, end_date)
 
-    def get_edited_day_price_data(self, universe: str) -> dict:
+    def get_edited_day_price_data(self, universe: Universe) -> dict:
         """
         universe에 포함된 종목들의 수정주가 일봉 데이터 반환
         :param universe:
@@ -184,30 +178,30 @@ class Generator:
         """
         return self.__get_edited_day_price_data_by_ticker(ticker, TABLE_EDITED_CANDLE_DAY)
 
-    def get_today_universe_stock_list(self, universe: str, today: date) -> list:
+    def get_today_universe_stock_list(self, universe: Universe, today: date) -> list:
         """
         당일의 universe에 포함된 종목 리스트 반환
         :param universe: kospi, kosdaq, kospi200, kosdaq150, top2000, top350(kospi200과 kosdaq150)
         :param today: 당일 날짜
         :return: 해당 universe의 종목 리스트
         """
-        if universe in ('kospi', 'kosdaq', 'kospi200', 'kosdaq150'):
-            data_universe = Table(f'data_{universe}history')
+        if universe in (Universe.kospi, Universe.kosdaq, Universe.kospi200, Universe.kosdaq150):
+            data_universe = Table(f'data_{universe.name}history')
             query = MySQLQuery.from_(data_universe).select(data_universe.tickers).where(
                 data_universe.date == today)
             df = self.executor.sql(query.get_sql())
             today_universe_stock_list = df['tickers'].iloc[0].split(',')
-        elif universe in ('total', 'top350'):
-            if universe == 'total':
-                today_universe_stock_list = self.get_today_universe_stock_list('kospi', today) + \
-                                            self.get_today_universe_stock_list('kosdaq', today)
-            elif universe == 'top350':
-                today_universe_stock_list = self.get_today_universe_stock_list('kospi200', today) + \
-                                            self.get_today_universe_stock_list('kosdaq150', today)
+        elif universe in (Universe.total, Universe.top350):
+            if universe == Universe.total:
+                today_universe_stock_list = self.get_today_universe_stock_list(Universe.kospi.name, today) + \
+                                            self.get_today_universe_stock_list(Universe.kosdaq.name, today)
+            elif universe == Universe.top350:
+                today_universe_stock_list = self.get_today_universe_stock_list(Universe.kospi200.name, today) + \
+                                            self.get_today_universe_stock_list(Universe.kosdaq150.name, today)
 
         return today_universe_stock_list
 
-    def get_index_day_price_data(self, universe: str, start_date: date, end_date: date) -> Optional[DataFrame]:
+    def get_index_day_price_data(self, universe: Universe, start_date: date, end_date: date) -> Optional[DataFrame]:
         """
         해당 universe의 index 가격을 조회
         :param universe: kospi, kosdaq, kospi200, kosdaq150
@@ -215,17 +209,17 @@ class Generator:
         :param end_date:
         :return:
         """
-        if universe in ('kospi', 'kosdaq'):
-            universe = universe.upper()
-        elif universe in ('kospi200', 'kosdaq150'):
-            if universe == 'kospi200':
-                universe = 'KOSPI_200'
-            elif universe == 'kosdaq150':
-                universe = 'KOSDAQ_150'
+        if universe in (Universe.kospi, Universe.kosdaq):
+            ticker = universe.name.upper()
+        elif universe in (Universe.kospi200, Universe.kosdaq150):
+            if universe == Universe.kospi200:
+                ticker = 'KOSPI_200'
+            elif universe == Universe.kosdaq150:
+                ticker = 'KOSDAQ_150'
 
         data_index_candle = Table('data_indexcandleday')
         query = MySQLQuery.from_(data_index_candle).select('*').where(Criterion.all([
-            data_index_candle.ticker == universe,
+            data_index_candle.ticker == ticker,
             data_index_candle.date >= start_date,
             data_index_candle.date <= end_date
         ]))
@@ -234,7 +228,7 @@ class Generator:
 
         return df
 
-    def get_exchange_rate(self, exchange_index: ExchangeRateEnum, start_date: date, end_date: date) -> DataFrame:
+    def get_exchange_rate(self, exchange_index: ExchangeRate, start_date: date, end_date: date) -> DataFrame:
         """
         달러, 유로, 엔 환율 조회
         :param exchange_index:
