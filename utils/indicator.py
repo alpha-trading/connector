@@ -2,7 +2,6 @@
 from typing import Tuple
 from pandas import DataFrame, Series
 import numpy as np
-from enum import Enum
 
 from utils.parameter import MovingAverage
 

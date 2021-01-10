@@ -4,7 +4,7 @@ from typing import Optional
 from utils import Executor
 from datetime import date
 from pandas import DataFrame
-from utils.parameter import Universe, ExchangeRate  # pip시에도 이렇게 하는것이 맞는지 질문!
+from utils.parameter import Universe, ExchangeRate
 
 TABLE_RAW_CANDLE_DAY = 'data_candleday'
 TABLE_EDITED_CANDLE_DAY = 'data_editedcandleday'
