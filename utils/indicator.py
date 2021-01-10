@@ -2,14 +2,8 @@
 from typing import Tuple
 from pandas import DataFrame, Series
 import numpy as np
-from enum import Enum
 
-
-class Criteria(Enum):
-    sma = 1
-    ema = 2
-    ewma = 3
-    wma = 4
+from utils.parameter import MovingAverage
 
 
 class Indicator:
@@ -57,7 +51,8 @@ class Indicator:
         return price.rolling(window=day).std(ddof=ddof)
 
     @classmethod
-    def get_bollinger(cls, price: Series, day: int, r: int, criteria: Criteria = Criteria.ewma) -> Tuple[Series, Series]:
+    def get_bollinger(cls, price: Series, day: int, r: int,
+                      moving_average: MovingAverage = MovingAverage.ewma) -> Tuple[Series, Series]:
         """
         Bollinger Bands를 구하는 함수
         Bollinger Bands의 상, 하한선은 표준 편차에 의해 산출된 이동평균 값이며,
@@ -66,16 +61,16 @@ class Indicator:
         :param price: Bollinger Bands를 구할 때 사용하는 가격 ex) price_open, price_high, price_low, price_close
         :param day:
         :param r: 표준편차 승수 ex) 2
-        :param criteria: 중간 밴드 기준 ex) 단순이동평균, 지수이동평균, 가중이동평균
+        :param moving_average: 중간 밴드 기준 ex) 단순이동평균, 지수이동평균, 가중이동평균
         :return: Bollinger Bands 상한선, 하한선
         """
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             line_mid = cls.get_sma(price, day)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             line_mid = cls.get_ema(price, day)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             line_mid = cls.get_ewma(price, day)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             line_mid = cls.get_wma(price, day)
         line_std = cls.get_stddev(price, day, ddof=0)
         bollinger_range = line_std.multiply(r)
@@ -103,22 +98,23 @@ class Indicator:
         return demark_high, demark_low
 
     @classmethod
-    def get_envelope(cls, price: Series, day: int, r: float, criteria: Criteria = Criteria.sma) -> Tuple[Series, Series]:
+    def get_envelope(cls, price: Series, day: int, r: float,
+                     moving_average: MovingAverage = MovingAverage.sma) -> Tuple[Series, Series]:
         """
         Envelope를 구하는 함수
         :param price: Envelope를 구할 때 사용하는 가격 ex) price_open, price_high, price_low, price_close
         :param day:
         :param r: 비율 ex) 0.02, 0.08
-        :param criteria: 중심선 기준 ex) 단순이동평균, 지수이동평균, 가중이동평균
+        :param moving_average: 중심선 기준 ex) 단순이동평균, 지수이동평균, 가중이동평균
         :return: Envelope 상한선, 하한선
         """
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             line_mid = Indicator.get_sma(price, day)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             line_mid = Indicator.get_ema(price, day)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             line_mid = Indicator.get_ewma(price, day)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             line_mid = Indicator.get_wma(price, day)
 
         envelope_range = line_mid.multiply(r)
@@ -194,25 +190,26 @@ class Indicator:
         return pdi, mdi, adx
 
     @classmethod
-    def get_macd(cls, price: Series, day_short: int, day_long: int, criteria: Criteria = Criteria.ewma) -> Series:
+    def get_macd(cls, price: Series, day_short: int, day_long: int,
+                 moving_average: MovingAverage = MovingAverage.ewma) -> Series:
         """
         MACD(Moving Average Convergence and Divergence)를 구하는 함수
         :param price: MACD를 구할 때 사용하는 가격 ex) price_open, price_high, price_low, price_close
         :param day_short: 단기이동평균 기간
         :param day_long: 장기이동평균 기간
-        :param criteria: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
+        :param moving_average: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
         :return: MACD
         """
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             short_term = cls.get_sma(price, day_short)
             long_term = cls.get_sma(price, day_long)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             short_term = cls.get_ema(price, day_short)
             long_term = cls.get_ema(price, day_long)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             short_term = cls.get_ewma(price, day_short)
             long_term = cls.get_ewma(price, day_long)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             short_term = cls.get_wma(price, day_short)
             long_term = cls.get_wma(price, day_long)
 
@@ -221,7 +218,7 @@ class Indicator:
 
     @classmethod
     def get_macd_oscillator(cls, price: Series, day_short: int, day_long: int, day_signal: int,
-                           criteria: Criteria = Criteria.ewma) -> Series:
+                            moving_average: MovingAverage = MovingAverage.ewma) -> Series:
         """
         MACD Oscillator를 구하는 함수
         MACD Oscillator는 MACD와 Signal의 교차를 보다 정확하게 인식하기 위해서 MACD 값에서 Signal 값을 뺀다.
@@ -229,17 +226,17 @@ class Indicator:
         :param day_short: 단기이동평균 기간
         :param day_long: 장기이동평균 기간
         :param day_signal: 시그널 기간
-        :param criteria: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
+        :param moving_average: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
         :return: MACD Oscillator
         """
-        macd = cls.get_macd(price, day_short, day_long, criteria)
-        if criteria == Criteria.sma:
+        macd = cls.get_macd(price, day_short, day_long, moving_average)
+        if moving_average == MovingAverage.sma:
             signal = cls.get_sma(macd, day_signal)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             signal = cls.get_ema(macd, day_signal)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             signal = cls.get_ewma(macd, day_signal)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             signal = cls.get_wma(macd, day_signal)
 
         macd_osillator = macd - signal
@@ -274,7 +271,7 @@ class Indicator:
 
     @classmethod
     def get_stochastic_fast(cls, price_high: Series, price_low: Series, price_close: Series, fast_k_period: int,
-                            fast_d_period: int, criteria: Criteria = Criteria.ema) -> Tuple[Series, Series]:
+                            fast_d_period: int, moving_average: MovingAverage = MovingAverage.ema) -> Tuple[Series, Series]:
         """
         Stochastic Fast 구하는 함수
         Stochastic은 적용기간 중에 움직인 가격 범위에서 오늘의 시장가격이 상대적으로 어디에 위치하고 있는지를 알려주는 지표로써,
@@ -285,18 +282,18 @@ class Indicator:
         :param price_close: 종가
         :param fast_k_period: k기간
         :param fast_d_period: d기간
-        :param criteria: 이동평균선 종류 (일반적으로 지수이평선을 사용)
+        :param moving_average: 이동평균선 종류 (일반적으로 지수이평선을 사용)
         :return: k_value, d_value (K: Stochastic Fast, D: Stochastic Fast를 이동평균한 값)
         """
         k_value = ((price_close - price_low.rolling(window=fast_k_period).min()) /
                    (price_high.rolling(window=fast_k_period).max() - price_low.rolling(window=fast_k_period).min()))
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             d_value = cls.get_sma(k_value, fast_d_period)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             d_value = cls.get_ema(k_value, fast_d_period)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             d_value = cls.get_ewma(k_value, fast_d_period)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             d_value = cls.get_wma(k_value, fast_d_period)
 
         return k_value, d_value
@@ -369,20 +366,20 @@ class Indicator:
         return psychological
 
     @classmethod
-    def get_disparity(cls, price: Series, day: int, criteria: Criteria = Criteria.sma) -> Series:
+    def get_disparity(cls, price: Series, day: int, moving_average: MovingAverage = MovingAverage.sma) -> Series:
         """
         Disparity를 구하는 함수
         Disparity는 주가가 이동평균선과 어느 정도 떨어져 있는가를 분석한 것이다.
         :param price: Disparity를 구할 때 사용하는 가격 ex) price_open, price_high, price_low, price_close
         :param day:
-        :param criteria: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
+        :param moving_average: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
         :return: N일간 이동평균과의 Disparity
         """
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             moving_average = cls.get_sma(price, day)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             moving_average = cls.get_ema(price, day)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             moving_average = cls.get_wma(price, day)
         disparity = price.divide(moving_average)
         return disparity
@@ -457,8 +454,8 @@ class Indicator:
         return a_ratio, b_ratio
 
     @classmethod
-    def get_mass_index(cls, price_high: Series, price_low: Series, period: int, criteria: Criteria = Criteria.ewma) \
-        -> Series:
+    def get_mass_index(cls, price_high: Series, price_low: Series, period: int,
+                       moving_average: MovingAverage = MovingAverage.ewma) -> Series:
         """
         Mass Index를 구하는 함수
         고가와 저가 사이의 변동폭을 측정하여 단기적인 추세의 전환점을 찾아내는 지표이다.
@@ -467,21 +464,21 @@ class Indicator:
         :param price_high: 고가
         :param price_low: 저가
         :param period: 합하고자 하는 일 수
-        :param criteria: 이동평균의 종류 (일반적으로 지수가중이동평균을 이용)
+        :param moving_average: 이동평균의 종류 (일반적으로 지수가중이동평균을 이용)
         :return: N일간 Mass Index
         """
         day_range = cls.get_range(price_high, price_low, 1)
 
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             single = cls.get_sma(day_range, 9)
             double = cls.get_sma(single, 9)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             single = cls.get_ema(day_range, 9)
             double = cls.get_ema(single, 9)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             single = cls.get_ewma(day_range, 9)
             double = cls.get_ewma(single, 9)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             single = cls.get_wma(day_range, 9)
             double = cls.get_wma(single, 9)
         ratio = single / double
@@ -489,49 +486,51 @@ class Indicator:
         return ratio.rolling(window=period).sum()
 
     @classmethod
-    def get_range(cls, price_high: Series, price_low: Series, day: int, criteria: Criteria = Criteria.sma) -> Series:
+    def get_range(cls, price_high: Series, price_low: Series, day: int,
+                  moving_average: MovingAverage = MovingAverage.sma) -> Series:
         """
         Range를 구하는 함수
         :param price_high: 고가
         :param price_low: 저가
         :param day:
-        :param criteria: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
+        :param moving_average: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
         :return: N일간 평균 Range
         """
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             day_range = cls.get_sma(price_high - price_low, day)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             day_range = cls.get_ema(price_high - price_low, day)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             day_range = cls.get_ewma(price_high - price_low, day)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             day_range = cls.get_wma(price_high - price_low, day)
         return day_range
 
     @classmethod
-    def get_mao(cls, price_close: Series, short_period: int, long_period: int, criteria: Criteria = Criteria.sma) -> Series:
+    def get_mao(cls, price_close: Series, short_period: int, long_period: int,
+                moving_average: MovingAverage = MovingAverage.sma) -> Series:
         """
         MAO를 구하는 함수
         MAO는 단기 이동 평균 값과 장기 이동 평균 값의 차이를 나타내어 주가 추세를 판단하기 위한 지표이다.
         :param price_close: 종가
         :param short_period: 단기 이동 평균 기간
         :param long_period: 장기 이동 평균 기간
-        :param criteria: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
+        :param moving_average: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
         :return:
         """
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             mao = cls.get_sma(price_close, short_period) - Indicator.get_sma(price_close, long_period)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             mao = cls.get_ema(price_close, short_period) - Indicator.get_ema(price_close, long_period)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             mao = cls.get_ewma(price_close, short_period) - Indicator.get_ewma(price_close, long_period)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             mao = cls.get_wma(price_close, short_period) - Indicator.get_wma(price_close, long_period)
         return mao
 
     @classmethod
     def get_sonar(cls, price_close: Series, moving_average_period: int, sonar_period: int,
-                  sonar_moving_average_period: int, criteria: Criteria = Criteria.ema) -> Tuple[Series, Series]:
+                  sonar_moving_average_period: int, moving_average: MovingAverage = MovingAverage.ema) -> Tuple[Series, Series]:
         """
         sonar를 구하는 함수
         sonar는 주가의 추세 전환 시점을 파악하기 위한 지표이다.
@@ -541,27 +540,27 @@ class Indicator:
         :param moving_average_period: 이동평균 기간
         :param sonar_period: SONAR 기간
         :param sonar_moving_average_period: SONAR 이동평균 기간
-        :param criteria: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
+        :param moving_average: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
         :return:
         """
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             sonar_moving_average = cls.get_sma(price_close, moving_average_period)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             sonar_moving_average = cls.get_ema(price_close, moving_average_period)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             sonar_moving_average = cls.get_ewma(price_close, moving_average_period)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             sonar_moving_average = cls.get_wma(price_close, moving_average_period)
 
         sonar = sonar_moving_average - sonar_moving_average.shift(sonar_period)
 
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             signal = cls.get_sma(sonar, sonar_moving_average_period)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             signal = cls.get_ema(sonar, sonar_moving_average_period)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             signal = cls.get_ewma(sonar, sonar_moving_average_period)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             signal = cls.get_wma(sonar, sonar_moving_average_period)
 
         return sonar, signal
@@ -583,34 +582,34 @@ class Indicator:
         return mfi
 
     @classmethod
-    def get_trix(cls, price_close: Series, period: int, signal_period: int, criteria: Criteria = Criteria.ema) \
-            -> Tuple[Series, Series]:
+    def get_trix(cls, price_close: Series, period: int, signal_period: int,
+                 moving_average: MovingAverage = MovingAverage.ema) -> Tuple[Series, Series]:
         """
         tirx를 구하는 함수
         :param price_close: 종가
         :param period: 이동평균 기간
         :param signal_period: 시그널 기간
-        :param criteria: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
+        :param moving_average: 이동평균의 종류 ex) 단순이동평균, 지수이동평균, 가중이동평균
         :return:
         """
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             ma3 = cls.get_sma(cls.get_sma(cls.get_sma(price_close, period), period), period)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             ma3 = cls.get_ema(cls.get_ema(cls.get_ema(price_close, period), period), period)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             ma3 = cls.get_ewma(cls.get_ewma(cls.get_ewma(price_close, period), period), period)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             ma3 = cls.get_wma(cls.get_wma(cls.get_wma(price_close, period), period), period)
 
         trix = ma3.diff(1) / ma3.shift(1)
 
-        if criteria == Criteria.sma:
+        if moving_average == MovingAverage.sma:
             signal = cls.get_sma(trix, signal_period)
-        elif criteria == Criteria.ema:
+        elif moving_average == MovingAverage.ema:
             signal = cls.get_ema(trix, signal_period)
-        elif criteria == Criteria.ewma:
+        elif moving_average == MovingAverage.ewma:
             signal = cls.get_ewma(trix, signal_period)
-        elif criteria == Criteria.wma:
+        elif moving_average == MovingAverage.wma:
             signal = cls.get_wma(trix, signal_period)
 
         return trix, signal
