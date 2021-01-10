@@ -115,6 +115,23 @@ def get_lower_limit_price(yesterday_close: int, today: date, market: str) -> int
     return real_lower_limit_price
 
 
+def get_stock_exchange_tax(day: date):
+    """
+    당일의 증권거래세를 반환하는 함수
+    :param day: 당일 날짜
+    :return: 당일의 증권거래세
+    """
+    if day < date(2019, 6, 3):
+        stock_exchange_tax = 0.3
+    elif day < date(2021, 1, 1):
+        stock_exchange_tax = 0.25
+    elif day < date(2023, 1, 1):
+        stock_exchange_tax = 0.23
+    else:
+        stock_exchange_tax = 0.15
+    return stock_exchange_tax
+
+
 def get_api_token() -> str:
     dotenv.load_dotenv()
 
