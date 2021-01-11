@@ -52,8 +52,8 @@ class Generator:
 
         elif universe in (Universe.top350, Universe.kospi200, Universe.kosdaq150):
             if universe == Universe.top350:
-                kospi200_past_universe_stock_list = self.get_past_universe_stock_list(Universe.kospi200.name)
-                kosdaq150_past_universe_stock_list = self.get_past_universe_stock_list(Universe.kosdaq150.name)
+                kospi200_past_universe_stock_list = self.get_past_universe_stock_list(Universe.kospi200)
+                kosdaq150_past_universe_stock_list = self.get_past_universe_stock_list(Universe.kosdaq150)
                 return kospi200_past_universe_stock_list + kosdaq150_past_universe_stock_list
             elif universe in (Universe.kospi200, Universe.kosdaq150):
                 data_universe = Table(f'data_{universe.name}')
@@ -193,11 +193,11 @@ class Generator:
             today_universe_stock_list = df['tickers'].iloc[0].split(',')
         elif universe in (Universe.total, Universe.top350):
             if universe == Universe.total:
-                today_universe_stock_list = self.get_today_universe_stock_list(Universe.kospi.name, today) + \
-                                            self.get_today_universe_stock_list(Universe.kosdaq.name, today)
+                today_universe_stock_list = self.get_today_universe_stock_list(Universe.kospi, today) + \
+                                            self.get_today_universe_stock_list(Universe.kosdaq, today)
             elif universe == Universe.top350:
-                today_universe_stock_list = self.get_today_universe_stock_list(Universe.kospi200.name, today) + \
-                                            self.get_today_universe_stock_list(Universe.kosdaq150.name, today)
+                today_universe_stock_list = self.get_today_universe_stock_list(Universe.kospi200, today) + \
+                                            self.get_today_universe_stock_list(Universe.kosdaq150, today)
 
         return today_universe_stock_list
 
