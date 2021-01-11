@@ -15,6 +15,11 @@ def linear_regression(x, y):
 class Function:
 
     @staticmethod
+    def get_rank(value: Series, pct: bool = True) -> Series:
+        # 수정해야!
+        return value.rank(pct=pct)
+
+    @staticmethod
     def get_ts_sum(value: Series, day: int) -> Series:
         ts_sum = value.rolling(window=day, min_periods=day).sum()
         return ts_sum
