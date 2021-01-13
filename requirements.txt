@@ -36,6 +36,7 @@ ptyprocess==0.6.0
 pycparser==2.20
 pymysql==0.9.3
 pyparsing==2.4.7
+pypika==0.47.0
 python-dateutil==2.8.1
 python-dotenv==0.14.0
 python-telegram-bot==12.8
