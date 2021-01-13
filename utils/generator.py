@@ -213,9 +213,9 @@ class Generator:
             ticker = universe.name.upper()
         elif universe in (Universe.kospi200, Universe.kosdaq150):
             if universe == Universe.kospi200:
-                ticker = 'KOSPI_200'
+                ticker = 'KOSPI200'
             elif universe == Universe.kosdaq150:
-                ticker = 'KOSDAQ_150'
+                ticker = 'KOSDAQ150'
 
         data_index_candle = Table('data_indexcandleday')
         query = MySQLQuery.from_(data_index_candle).select('*').where(Criterion.all([
