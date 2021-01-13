@@ -122,13 +122,13 @@ def get_stock_exchange_tax(day: date):
     :return: 당일의 증권거래세
     """
     if day < date(2019, 6, 3):
-        stock_exchange_tax = 0.3
+        stock_exchange_tax = 0.003
     elif day < date(2021, 1, 1):
-        stock_exchange_tax = 0.25
+        stock_exchange_tax = 0.0025
     elif day < date(2023, 1, 1):
-        stock_exchange_tax = 0.23
+        stock_exchange_tax = 0.0023
     else:
-        stock_exchange_tax = 0.15
+        stock_exchange_tax = 0.0015
     return stock_exchange_tax
 
 
