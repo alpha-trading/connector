@@ -78,18 +78,24 @@ class Generator:
                 data_day_price.date == data_share.date]))
         if trading_trend is True:
             data_trend = Table('data_daytradingtrend')
-            query = query.join(data_trend).on(Criterion.all([
-                data_day_price.ticker_id == data_share.ticker_id,
-                data_day_price.date == data_share.date
+            query = query.left_join(data_trend).on(Criterion.all([
+                data_day_price.ticker_id == data_trend.ticker_id,
+                data_day_price.date == data_trend.date
             ]))
         if trading_share is False and trading_trend is False:
             query = query.select(data_day_price.star, data_ticker.ticker)
         if trading_share is True and trading_trend is False:
             query = query.select(data_day_price.star, data_ticker.ticker, data_share.cap, data_share.shares_out)
         if trading_share is False and trading_trend is True:
-            pass
+            query = query.select(data_day_price.star, data_trend.p_buy_vol, data_trend.p_buy_tr_val,
+                                 data_trend.o_buy_vol, data_trend.o_buy_tr_val,
+                                 data_trend.f_buy_vol, data_trend.f_buy_tr_val,
+                                 data_trend.pension_f_buy_vol, data_trend.pension_f_tr_val)
         if trading_share is True and trading_trend is True:
-            pass
+            query = query.select(data_day_price.star, data_trend.p_buy_vol, data_trend.p_buy_tr_val,
+                                 data_trend.o_buy_vol, data_trend.o_buy_tr_val,
+                                 data_trend.f_buy_vol, data_trend.f_buy_tr_val,
+                                 data_trend.pension_f_buy_vol, data_trend.pension_f_tr_val)
         query = query.where(Criterion.all([
             data_ticker.ticker.isin(past_universe_stock_list),
             data_day_price.date >= start_date,
@@ -135,18 +141,24 @@ class Generator:
                 data_day_price.date == data_share.date]))
         if trading_trend is True:
             data_trend = Table('data_daytradingtrend')
-            query = query.join(data_trend).on(Criterion.all([
-                data_day_price.ticker_id == data_share.ticker_id,
-                data_day_price.date == data_share.date
+            query = query.left_join(data_trend).on(Criterion.all([
+                data_day_price.ticker_id == data_trend.ticker_id,
+                data_day_price.date == data_trend.date
             ]))
         if trading_share is False and trading_trend is False:
             query = query.select(data_day_price.star, data_ticker.ticker)
         if trading_share is True and trading_trend is False:
             query = query.select(data_day_price.star, data_ticker.ticker, data_share.cap, data_share.shares_out)
         if trading_share is False and trading_trend is True:
-            pass
+            query = query.select(data_day_price.star, data_trend.p_buy_vol, data_trend.p_buy_tr_val,
+                                 data_trend.o_buy_vol, data_trend.o_buy_tr_val,
+                                 data_trend.f_buy_vol, data_trend.f_buy_tr_val,
+                                 data_trend.pension_f_buy_vol, data_trend.pension_f_tr_val)
         if trading_share is True and trading_trend is True:
-            pass
+            query = query.select(data_day_price.star, data_trend.p_buy_vol, data_trend.p_buy_tr_val,
+                                 data_trend.o_buy_vol, data_trend.o_buy_tr_val,
+                                 data_trend.f_buy_vol, data_trend.f_buy_tr_val,
+                                 data_trend.pension_f_buy_vol, data_trend.pension_f_tr_val)
         query = query.where(Criterion.all([
                 data_ticker.ticker == ticker,
                 data_day_price.date >= start_date,
