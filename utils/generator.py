@@ -87,12 +87,13 @@ class Generator:
         if trading_share is True and trading_trend is False:
             query = query.select(data_day_price.star, data_ticker.ticker, data_share.cap, data_share.shares_out)
         if trading_share is False and trading_trend is True:
-            query = query.select(data_day_price.star, data_trend.p_buy_vol, data_trend.p_buy_tr_val,
+            query = query.select(data_day_price.star, data_ticker.ticker, data_trend.p_buy_vol, data_trend.p_buy_tr_val,
                                  data_trend.o_buy_vol, data_trend.o_buy_tr_val,
                                  data_trend.f_buy_vol, data_trend.f_buy_tr_val,
                                  data_trend.pension_f_buy_vol, data_trend.pension_f_tr_val)
         if trading_share is True and trading_trend is True:
-            query = query.select(data_day_price.star, data_trend.p_buy_vol, data_trend.p_buy_tr_val,
+            query = query.select(data_day_price.star, data_ticker.ticker, data_share.cap, data_share.shares_out,
+                                 data_trend.p_buy_vol, data_trend.p_buy_tr_val,
                                  data_trend.o_buy_vol, data_trend.o_buy_tr_val,
                                  data_trend.f_buy_vol, data_trend.f_buy_tr_val,
                                  data_trend.pension_f_buy_vol, data_trend.pension_f_tr_val)
@@ -155,7 +156,8 @@ class Generator:
                                  data_trend.f_buy_vol, data_trend.f_buy_tr_val,
                                  data_trend.pension_f_buy_vol, data_trend.pension_f_tr_val)
         if trading_share is True and trading_trend is True:
-            query = query.select(data_day_price.star, data_trend.p_buy_vol, data_trend.p_buy_tr_val,
+            query = query.select(data_day_price.star, data_share.cap, data_share.shares_out,
+                                 data_trend.p_buy_vol, data_trend.p_buy_tr_val,
                                  data_trend.o_buy_vol, data_trend.o_buy_tr_val,
                                  data_trend.f_buy_vol, data_trend.f_buy_tr_val,
                                  data_trend.pension_f_buy_vol, data_trend.pension_f_tr_val)
