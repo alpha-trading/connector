@@ -1,22 +1,23 @@
 import os
 from datetime import date
 from math import floor
-
 import dotenv
+
+from utils.parameter import Market
 
 
 def year_to_date(year: int):
     return date(year=year, month=1, day=1)
 
 
-def get_hoga(price: int, market: str) -> int:
+def get_hoga(price: int, market: Market) -> int:
     """
     주가에 따른 1호가 가격을 구하는 함수
     :param price: 주가
     :param market: kospi / kosdaq
     :return: 1호가 가격
     """
-    if market == 'kospi':
+    if market == Market.kospi:
         if price >= 500000:
             hoga = 1000
         elif price >= 100000:
@@ -32,7 +33,7 @@ def get_hoga(price: int, market: str) -> int:
         else:
             hoga = 1
 
-    elif market == 'kosdaq':
+    elif market == Market.kosdaq:
         if price >= 50000:
             hoga = 100
         elif price >= 10000:
@@ -43,7 +44,7 @@ def get_hoga(price: int, market: str) -> int:
             hoga = 5
         else:
             hoga = 1
-    elif market == 'etf':
+    elif market == Market.etf:
         hoga = 5
     else:
         raise ValueError("market should be kospi or kosdaq")
@@ -51,7 +52,7 @@ def get_hoga(price: int, market: str) -> int:
     return hoga
 
 
-def get_bid_price(price: int or float, market: str) -> int:
+def get_bid_price(price: int or float, market: Market) -> int:
     """
     살 가격을 구하는 함수
     :param price: 현재가
@@ -62,7 +63,7 @@ def get_bid_price(price: int or float, market: str) -> int:
     return int(price // hoga) * hoga + hoga
 
 
-def get_ask_price(price: int, market: str) -> int:
+def get_ask_price(price: int, market: Market) -> int:
     """
     팔 가격을 구하는 함수
     :param price: 현재가
@@ -83,7 +84,7 @@ def get_limit_percent(today: date) -> float:
         return 0.3
 
 
-def get_upper_limit_price(yesterday_close: int, today: date, market: str) -> int:
+def get_upper_limit_price(yesterday_close: int, today: date, market: Market) -> int:
     """
     당일 상한가를 반환하는 함수
     :param yesterday_close: 전일 종가
@@ -99,7 +100,7 @@ def get_upper_limit_price(yesterday_close: int, today: date, market: str) -> int
     return real_upper_limit_price
 
 
-def get_lower_limit_price(yesterday_close: int, today: date, market: str) -> int:
+def get_lower_limit_price(yesterday_close: int, today: date, market: Market) -> int:
     """
     당일 하한가를 반환하는 함수
     :param yesterday_close: 전일 종가

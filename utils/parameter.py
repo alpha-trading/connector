@@ -1,6 +1,11 @@
 from enum import Enum
 
 
+class Market(Enum):
+    kospi = 1
+    kosdaq = 2
+    etf = 3
+
 class Universe(Enum):
     total = 1
     top350 = 2
