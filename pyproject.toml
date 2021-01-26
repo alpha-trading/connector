@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "utils"
-version = "3.7.1"
+version = "3.7.2"
 description = "Alpha trading utils with pandas"
 authors = ["yangroro <yang@heechan.kr>"]
 license = "MIT"
@@ -21,6 +21,15 @@ python-telegram-bot = "^12.8"
 pypika = "^0.47.0"
 [tool.poetry.dev-dependencies]
 dephell = "^0.8.3"
+
+[tool.black]
+line-length = 119
+target-version = ['py37']
+exclude = '''
+(
+  setup.py
+)
+'''
 
 [tool.dephell.main]
 from = {format = "poetry", path = "pyproject.toml"}
