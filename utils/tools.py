@@ -136,5 +136,5 @@ def get_stock_exchange_tax(day: date):
 def get_api_token() -> str:
     dotenv.load_dotenv()
 
-    api_token = os.environ.get('API_TOKEN')
+    api_token = os.environ.get("API_TOKEN")
     return api_token

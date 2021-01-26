@@ -6,6 +6,7 @@ class Market(Enum):
     kosdaq = 2
     etf = 3
 
+
 class Universe(Enum):
     total = 1
     top350 = 2
@@ -16,9 +17,9 @@ class Universe(Enum):
 
 
 class ExchangeRate(Enum):
-    dollar = 'USDKRW'
-    euro = 'EURKRW'
-    yen = 'JPYKRW'
+    dollar = "USDKRW"
+    euro = "EURKRW"
+    yen = "JPYKRW"
 
 
 class MovingAverage(Enum):

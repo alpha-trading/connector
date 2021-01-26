@@ -7,7 +7,6 @@ from utils.parameter import MovingAverage
 
 
 class Indicator:
-
     @staticmethod
     def get_sma(price: Series, day: int) -> Series:
         """
@@ -42,8 +41,10 @@ class Indicator:
         :param day:
         :return: N일간 price의 가중이동평균
         """
-        weight = np.arange(1, day+1)
-        wma = price.rolling(window=day).apply(lambda prices: np.dot(prices, weight) / weight.sum(), raw=True)
+        weight = np.arange(1, day + 1)
+        wma = price.rolling(window=day).apply(
+            lambda prices: np.dot(prices, weight) / weight.sum(), raw=True
+        )
         return wma
 
     @staticmethod
@@ -51,8 +52,13 @@ class Indicator:
         return price.rolling(window=day).std(ddof=ddof)
 
     @classmethod
-    def get_bollinger(cls, price: Series, day: int, r: int,
-                      moving_average: MovingAverage = MovingAverage.ewma) -> Tuple[Series, Series]:
+    def get_bollinger(
+        cls,
+        price: Series,
+        day: int,
+        r: int,
+        moving_average: MovingAverage = MovingAverage.ewma,
+    ) -> Tuple[Series, Series]:
         """
         Bollinger Bands를 구하는 함수
         Bollinger Bands의 상, 하한선은 표준 편차에 의해 산출된 이동평균 값이며,
@@ -79,7 +85,9 @@ class Indicator:
         return upper, lower
 
     @staticmethod
-    def get_demark(price_open: Series, price_high: Series, price_low: Series, price_close: Series) -> Tuple[Series, Series]:
+    def get_demark(
+        price_open: Series, price_high: Series, price_low: Series, price_close: Series
+    ) -> Tuple[Series, Series]:
         """
         Demark를 구하는 함수
         :param price_open: 시가
@@ -88,9 +96,21 @@ class Indicator:
         :param price_close: 종가
         :return: Demark 저항선, 지지선
         """
-        d1 = np.where(price_close > price_open, (price_high.mul(2) + price_low + price_close) / 2, 0)
-        d2 = np.where(price_close < price_open, (price_high + price_low.mul(2) + price_close) / 2, 0)
-        d3 = np.where(price_close == price_open, (price_high + price_low + price_close.mul(2)) / 2, 0)
+        d1 = np.where(
+            price_close > price_open,
+            (price_high.mul(2) + price_low + price_close) / 2,
+            0,
+        )
+        d2 = np.where(
+            price_close < price_open,
+            (price_high + price_low.mul(2) + price_close) / 2,
+            0,
+        )
+        d3 = np.where(
+            price_close == price_open,
+            (price_high + price_low + price_close.mul(2)) / 2,
+            0,
+        )
         d = Series(d1 + d2 + d3)
         demark_high = (d - price_low).shift(1)
         demark_low = (d - price_high).shift(1)
@@ -98,8 +118,13 @@ class Indicator:
         return demark_high, demark_low
 
     @classmethod
-    def get_envelope(cls, price: Series, day: int, r: float,
-                     moving_average: MovingAverage = MovingAverage.sma) -> Tuple[Series, Series]:
+    def get_envelope(
+        cls,
+        price: Series,
+        day: int,
+        r: float,
+        moving_average: MovingAverage = MovingAverage.sma,
+    ) -> Tuple[Series, Series]:
         """
         Envelope를 구하는 함수
         :param price: Envelope를 구할 때 사용하는 가격 ex) price_open, price_high, price_low, price_close
@@ -123,7 +148,9 @@ class Indicator:
         return upper, lower
 
     @staticmethod
-    def get_pivot(price_high: Series, price_low: Series, price_close: Series) -> Tuple[Series, Series, Series, Series, Series]:
+    def get_pivot(
+        price_high: Series, price_low: Series, price_close: Series
+    ) -> Tuple[Series, Series, Series, Series, Series]:
         """
         Pivot을 구하는 함수
         :param price_high: 고가
@@ -140,7 +167,9 @@ class Indicator:
         return r2, r1, pivot, s1, s2
 
     @staticmethod
-    def get_price_channel(price_high: Series, price_low: Series, day: int) -> Tuple[Series, Series]:
+    def get_price_channel(
+        price_high: Series, price_low: Series, day: int
+    ) -> Tuple[Series, Series]:
         """
         Price Channel를 구하는 함수
         Price Channel은 저항선과 지지선으로 구성된다.
@@ -157,7 +186,9 @@ class Indicator:
         return resistance_line, support_line
 
     @classmethod
-    def get_dmi(cls, price_high: Series, price_low: Series, price_close: Series, day: int) -> Tuple[Series, Series, Series]:
+    def get_dmi(
+        cls, price_high: Series, price_low: Series, price_close: Series, day: int
+    ) -> Tuple[Series, Series, Series]:
         """
         DMI를 구하는 함수
         DMI는 현재 시장의 추세와 강도를 함께 나타내는 지표로 단기보다는 중장기 추세분석에 유리하다.
@@ -168,17 +199,32 @@ class Indicator:
         :param day:
         :return: +DI, -DI, ADX
         """
-        data = {'range': abs(price_high - price_low), 'up': abs(price_high - price_close.shift(1)),
-                'down': abs(price_close.shift(1) - price_low)}
-        data = DataFrame(data, columns=['range', 'up', 'down'])
+        data = {
+            "range": abs(price_high - price_low),
+            "up": abs(price_high - price_close.shift(1)),
+            "down": abs(price_close.shift(1) - price_low),
+        }
+        data = DataFrame(data, columns=["range", "up", "down"])
 
         tr = data.max(axis=1)
 
-        pdm = np.where(((price_high.diff(1) > 0) & (price_high.diff(1) > price_low.shift(1) - price_low)),
-                       price_high.diff(1), 0)
+        pdm = np.where(
+            (
+                (price_high.diff(1) > 0)
+                & (price_high.diff(1) > price_low.shift(1) - price_low)
+            ),
+            price_high.diff(1),
+            0,
+        )
         pdmn = cls.get_ema(Series(pdm), day)
-        mdm = np.where((((price_low.shift(1) - price_low) > 0) & (price_high.diff(1) < (price_low.shift(1) - price_low))),
-                       price_low.shift(1) - price_low, 0)
+        mdm = np.where(
+            (
+                ((price_low.shift(1) - price_low) > 0)
+                & (price_high.diff(1) < (price_low.shift(1) - price_low))
+            ),
+            price_low.shift(1) - price_low,
+            0,
+        )
         mdmn = cls.get_ema(Series(mdm), day)
 
         div = cls.get_ema(tr, day)
@@ -190,8 +236,13 @@ class Indicator:
         return pdi, mdi, adx
 
     @classmethod
-    def get_macd(cls, price: Series, day_short: int, day_long: int,
-                 moving_average: MovingAverage = MovingAverage.ewma) -> Series:
+    def get_macd(
+        cls,
+        price: Series,
+        day_short: int,
+        day_long: int,
+        moving_average: MovingAverage = MovingAverage.ewma,
+    ) -> Series:
         """
         MACD(Moving Average Convergence and Divergence)를 구하는 함수
         :param price: MACD를 구할 때 사용하는 가격 ex) price_open, price_high, price_low, price_close
@@ -217,8 +268,14 @@ class Indicator:
         return macd
 
     @classmethod
-    def get_macd_oscillator(cls, price: Series, day_short: int, day_long: int, day_signal: int,
-                            moving_average: MovingAverage = MovingAverage.ewma) -> Series:
+    def get_macd_oscillator(
+        cls,
+        price: Series,
+        day_short: int,
+        day_long: int,
+        day_signal: int,
+        moving_average: MovingAverage = MovingAverage.ewma,
+    ) -> Series:
         """
         MACD Oscillator를 구하는 함수
         MACD Oscillator는 MACD와 Signal의 교차를 보다 정확하게 인식하기 위해서 MACD 값에서 Signal 값을 뺀다.
@@ -270,8 +327,15 @@ class Indicator:
         return average_up.div(average_down + average_up)
 
     @classmethod
-    def get_stochastic_fast(cls, price_high: Series, price_low: Series, price_close: Series, fast_k_period: int,
-                            fast_d_period: int, moving_average: MovingAverage = MovingAverage.ema) -> Tuple[Series, Series]:
+    def get_stochastic_fast(
+        cls,
+        price_high: Series,
+        price_low: Series,
+        price_close: Series,
+        fast_k_period: int,
+        fast_d_period: int,
+        moving_average: MovingAverage = MovingAverage.ema,
+    ) -> Tuple[Series, Series]:
         """
         Stochastic Fast 구하는 함수
         Stochastic은 적용기간 중에 움직인 가격 범위에서 오늘의 시장가격이 상대적으로 어디에 위치하고 있는지를 알려주는 지표로써,
@@ -285,8 +349,10 @@ class Indicator:
         :param moving_average: 이동평균선 종류 (일반적으로 지수이평선을 사용)
         :return: k_value, d_value (K: Stochastic Fast, D: Stochastic Fast를 이동평균한 값)
         """
-        k_value = ((price_close - price_low.rolling(window=fast_k_period).min()) /
-                   (price_high.rolling(window=fast_k_period).max() - price_low.rolling(window=fast_k_period).min()))
+        k_value = (price_close - price_low.rolling(window=fast_k_period).min()) / (
+            price_high.rolling(window=fast_k_period).max()
+            - price_low.rolling(window=fast_k_period).min()
+        )
         if moving_average == MovingAverage.sma:
             d_value = cls.get_sma(k_value, fast_d_period)
         elif moving_average == MovingAverage.ema:
@@ -366,7 +432,9 @@ class Indicator:
         return psychological
 
     @classmethod
-    def get_disparity(cls, price: Series, day: int, moving_average: MovingAverage = MovingAverage.sma) -> Series:
+    def get_disparity(
+        cls, price: Series, day: int, moving_average: MovingAverage = MovingAverage.sma
+    ) -> Series:
         """
         Disparity를 구하는 함수
         Disparity는 주가가 이동평균선과 어느 정도 떨어져 있는가를 분석한 것이다.
@@ -397,7 +465,9 @@ class Indicator:
         return (price_close - price_low) / (price_high - price_low)
 
     @staticmethod
-    def get_head_ratio(price_open: Series, price_high: Series, price_low: Series, price_close: Series) -> Series:
+    def get_head_ratio(
+        price_open: Series, price_high: Series, price_low: Series, price_close: Series
+    ) -> Series:
         """
         윗꼬리 비율을 구하는 함수
         :param price_open: 시가
@@ -414,7 +484,9 @@ class Indicator:
         return head_ratio
 
     @staticmethod
-    def get_tail_ratio(price_open: Series, price_high: Series, price_low: Series, price_close: Series) -> Series:
+    def get_tail_ratio(
+        price_open: Series, price_high: Series, price_low: Series, price_close: Series
+    ) -> Series:
         """
         아래꼬리 비율을 구하는 함수
         :param price_open: 시가
@@ -431,8 +503,14 @@ class Indicator:
         return tail_ratio
 
     @classmethod
-    def get_ab_ratio(cls, price_open: Series, price_high: Series, price_low: Series, price_close: Series, period: int) \
-        -> Tuple[Series, Series]:
+    def get_ab_ratio(
+        cls,
+        price_open: Series,
+        price_high: Series,
+        price_low: Series,
+        price_close: Series,
+        period: int,
+    ) -> Tuple[Series, Series]:
         """
         AB Ratio를 구하는 함수
         AB Ratio는 주가 변동을 이용하여 강,약 에너지를 파악하고 이를 통해 주가의 움직임을 예측하는 지표이다.
@@ -445,17 +523,28 @@ class Indicator:
         """
         strength = price_high - price_open
         weakness = price_open - price_low
-        a_ratio = (strength.rolling(window=period).sum() / weakness.rolling(window=period).sum())
+        a_ratio = (
+            strength.rolling(window=period).sum()
+            / weakness.rolling(window=period).sum()
+        )
 
         strength = price_high - price_close.shift(1)
         weakness = price_close.shift(1) - price_low
-        b_ratio = (strength.rolling(window=period).sum() / weakness.rolling(window=period).sum())
+        b_ratio = (
+            strength.rolling(window=period).sum()
+            / weakness.rolling(window=period).sum()
+        )
 
         return a_ratio, b_ratio
 
     @classmethod
-    def get_mass_index(cls, price_high: Series, price_low: Series, period: int,
-                       moving_average: MovingAverage = MovingAverage.ewma) -> Series:
+    def get_mass_index(
+        cls,
+        price_high: Series,
+        price_low: Series,
+        period: int,
+        moving_average: MovingAverage = MovingAverage.ewma,
+    ) -> Series:
         """
         Mass Index를 구하는 함수
         고가와 저가 사이의 변동폭을 측정하여 단기적인 추세의 전환점을 찾아내는 지표이다.
@@ -486,8 +575,13 @@ class Indicator:
         return ratio.rolling(window=period).sum()
 
     @classmethod
-    def get_range(cls, price_high: Series, price_low: Series, day: int,
-                  moving_average: MovingAverage = MovingAverage.sma) -> Series:
+    def get_range(
+        cls,
+        price_high: Series,
+        price_low: Series,
+        day: int,
+        moving_average: MovingAverage = MovingAverage.sma,
+    ) -> Series:
         """
         Range를 구하는 함수
         :param price_high: 고가
@@ -507,8 +601,13 @@ class Indicator:
         return day_range
 
     @classmethod
-    def get_mao(cls, price_close: Series, short_period: int, long_period: int,
-                moving_average: MovingAverage = MovingAverage.sma) -> Series:
+    def get_mao(
+        cls,
+        price_close: Series,
+        short_period: int,
+        long_period: int,
+        moving_average: MovingAverage = MovingAverage.sma,
+    ) -> Series:
         """
         MAO를 구하는 함수
         MAO는 단기 이동 평균 값과 장기 이동 평균 값의 차이를 나타내어 주가 추세를 판단하기 위한 지표이다.
@@ -519,18 +618,32 @@ class Indicator:
         :return:
         """
         if moving_average == MovingAverage.sma:
-            mao = cls.get_sma(price_close, short_period) - Indicator.get_sma(price_close, long_period)
+            mao = cls.get_sma(price_close, short_period) - Indicator.get_sma(
+                price_close, long_period
+            )
         elif moving_average == MovingAverage.ema:
-            mao = cls.get_ema(price_close, short_period) - Indicator.get_ema(price_close, long_period)
+            mao = cls.get_ema(price_close, short_period) - Indicator.get_ema(
+                price_close, long_period
+            )
         elif moving_average == MovingAverage.ewma:
-            mao = cls.get_ewma(price_close, short_period) - Indicator.get_ewma(price_close, long_period)
+            mao = cls.get_ewma(price_close, short_period) - Indicator.get_ewma(
+                price_close, long_period
+            )
         elif moving_average == MovingAverage.wma:
-            mao = cls.get_wma(price_close, short_period) - Indicator.get_wma(price_close, long_period)
+            mao = cls.get_wma(price_close, short_period) - Indicator.get_wma(
+                price_close, long_period
+            )
         return mao
 
     @classmethod
-    def get_sonar(cls, price_close: Series, moving_average_period: int, sonar_period: int,
-                  sonar_moving_average_period: int, moving_average: MovingAverage = MovingAverage.ema) -> Tuple[Series, Series]:
+    def get_sonar(
+        cls,
+        price_close: Series,
+        moving_average_period: int,
+        sonar_period: int,
+        sonar_moving_average_period: int,
+        moving_average: MovingAverage = MovingAverage.ema,
+    ) -> Tuple[Series, Series]:
         """
         sonar를 구하는 함수
         sonar는 주가의 추세 전환 시점을 파악하기 위한 지표이다.
@@ -566,15 +679,25 @@ class Indicator:
         return sonar, signal
 
     @staticmethod
-    def get_mfi(price_high: Series, price_low: Series, price_close: Series, vol: Series, day: int) -> Series:
+    def get_mfi(
+        price_high: Series,
+        price_low: Series,
+        price_close: Series,
+        vol: Series,
+        day: int,
+    ) -> Series:
 
         typical_price = (price_high + price_low + price_close) / 3
         money_flow = vol * typical_price
 
         positive_money_flow = np.where(typical_price.diff(1) > 0, money_flow, 0)
-        positive_money_flow = Series(positive_money_flow).rolling(window=day, min_periods=day).sum()
+        positive_money_flow = (
+            Series(positive_money_flow).rolling(window=day, min_periods=day).sum()
+        )
         negative_money_flow = np.where(typical_price.diff(1) < 0, money_flow, 0)
-        negative_money_flow = Series(negative_money_flow).rolling(window=day, min_periods=day).sum()
+        negative_money_flow = (
+            Series(negative_money_flow).rolling(window=day, min_periods=day).sum()
+        )
 
         money_flow_ratio = positive_money_flow / negative_money_flow
         mfi = money_flow_ratio / (1 + money_flow_ratio)
@@ -582,8 +705,13 @@ class Indicator:
         return mfi
 
     @classmethod
-    def get_trix(cls, price_close: Series, period: int, signal_period: int,
-                 moving_average: MovingAverage = MovingAverage.ema) -> Tuple[Series, Series]:
+    def get_trix(
+        cls,
+        price_close: Series,
+        period: int,
+        signal_period: int,
+        moving_average: MovingAverage = MovingAverage.ema,
+    ) -> Tuple[Series, Series]:
         """
         tirx를 구하는 함수
         :param price_close: 종가
@@ -593,13 +721,21 @@ class Indicator:
         :return:
         """
         if moving_average == MovingAverage.sma:
-            ma3 = cls.get_sma(cls.get_sma(cls.get_sma(price_close, period), period), period)
+            ma3 = cls.get_sma(
+                cls.get_sma(cls.get_sma(price_close, period), period), period
+            )
         elif moving_average == MovingAverage.ema:
-            ma3 = cls.get_ema(cls.get_ema(cls.get_ema(price_close, period), period), period)
+            ma3 = cls.get_ema(
+                cls.get_ema(cls.get_ema(price_close, period), period), period
+            )
         elif moving_average == MovingAverage.ewma:
-            ma3 = cls.get_ewma(cls.get_ewma(cls.get_ewma(price_close, period), period), period)
+            ma3 = cls.get_ewma(
+                cls.get_ewma(cls.get_ewma(price_close, period), period), period
+            )
         elif moving_average == MovingAverage.wma:
-            ma3 = cls.get_wma(cls.get_wma(cls.get_wma(price_close, period), period), period)
+            ma3 = cls.get_wma(
+                cls.get_wma(cls.get_wma(price_close, period), period), period
+            )
 
         trix = ma3.diff(1) / ma3.shift(1)
 

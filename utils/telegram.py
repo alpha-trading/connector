@@ -6,9 +6,9 @@ from telegram import Bot
 class Telegram:
     def __init__(self, token: str = None, chat_id: str = None):
         if not token:
-            token = os.environ.get('TELEGRAM_TOKEN')
+            token = os.environ.get("TELEGRAM_TOKEN")
         if not chat_id:
-            chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+            chat_id = os.environ.get("TELEGRAM_CHAT_ID")
         self.chat_id = chat_id
         self.bot = Bot(token)
 

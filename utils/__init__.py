@@ -4,4 +4,4 @@ from .indicator import Indicator
 from .evaluator import Evaluator
 from .generator import Generator
 
-__all__ = ['Executor', 'Indicator', 'Evaluator', 'Generator']
+__all__ = ["Executor", "Indicator", "Evaluator", "Generator"]

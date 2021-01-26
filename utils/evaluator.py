@@ -10,12 +10,11 @@ from utils.parameter import Universe, UnitPeriod
 
 
 class Evaluator:
-
     def __init__(self, executor: Executor):
         self.generator = Generator(executor)
 
     @staticmethod
-    def __get_pnl(balance: Series) -> Series:
+    def get_pnl(balance: Series) -> Series:
         """
         일별 잔고의 손익 계산
         :param balance: 일별 잔고
@@ -25,7 +24,7 @@ class Evaluator:
         return pnl
 
     @staticmethod
-    def __get_return(balance: Series) -> Series:
+    def get_return(balance: Series) -> Series:
         """
         일별 수익률 계산
         :param balance: 일별 잔고
@@ -34,7 +33,7 @@ class Evaluator:
         daily_return = balance.pct_change(periods=1).fillna(0)
         return daily_return
 
-    def __get_index_day_price(self, universe: Universe, start_date, end_date):
+    def _get_index_day_price(self, universe: Universe, start_date, end_date):
         """
         비교 지수의 일봉 구하는 함수
         :param universe: 비교 지수
@@ -42,52 +41,45 @@ class Evaluator:
         :param end_date: 끝 날짜
         :return: 비교 지수의 일봉
         """
-        index_day_price = self.generator.get_index_day_price_data(universe, start_date, end_date)
+        index_day_price = self.generator.get_index_day_price_data(
+            universe, start_date, end_date
+        )
         return index_day_price
 
     @staticmethod
-    def __get_winning_rate(winning_pnl: Series, losing_pnl: Series) -> Tuple[int, float]:
+    def get_winning_rate(daily_balance: DataFrame) -> Tuple[int, float]:
         """
         거래일과 승률을 구하는 함수
-        :param winning_pnl:
-        :param losing_pnl:
+        :param daily_balance:
         :return:
         """
-        winning_days = winning_pnl.count()
-        losing_days = losing_pnl.count()
+        winning = daily_balance.query("pnl > 0")
+        losing = daily_balance.query("pnl < 0")
+
+        winning_days = winning.pnl.count()
+        losing_days = losing.pnl.count()
 
         trading_days = winning_days + losing_days
         winning_rate = winning_days / (winning_days + losing_days)
         return trading_days, winning_rate
 
     @staticmethod
-    def __get_profit_loss_rate(winning_returns: Series, losing_returns) -> float:
+    def get_profit_loss_rate(daily_balance: DataFrame) -> float:
         """
         손익비를 구하는 함수
-        :param winning_returns:
-        :param losing_returns:
-        :return:
-        """
-        profit_loss_rate = winning_returns.mean() / losing_returns.abs().mean()
-        return profit_loss_rate
-
-    @classmethod
-    def __get_basic_stat(cls, daily_balance: DataFrame) -> Tuple[int, float, float]:
-        """
-        거래일, 승률, 손익비를 반환하는 함수
         :param daily_balance:
         :return:
         """
-        winning = daily_balance.query('pnl > 0')
-        losing = daily_balance.query('pnl < 0')
+        winning = daily_balance.query("pnl > 0")
+        losing = daily_balance.query("pnl < 0")
 
-        trading_days, winning_rate = cls.__get_winning_rate(winning.pnl, losing.pnl)
-        profit_loss_rate = cls.__get_profit_loss_rate(winning.daily_return, losing.daily_return)
-
-        return trading_days, winning_rate, profit_loss_rate
+        profit_loss_rate = (
+            winning.daily_return.mean() / losing.daily_return.abs().mean()
+        )
+        return profit_loss_rate
 
     @staticmethod
-    def __get_cagr(previous_balance: Series, balance: Series) -> float:
+    def get_cagr(previous_balance: Series, balance: Series) -> float:
         """
         누적 수익률을 구하는 함수
         :param previous_balance:
@@ -95,13 +87,15 @@ class Evaluator:
         :return:
         """
         if len(previous_balance) > 0:
-            cagr = (balance.iloc[-1] - previous_balance.iloc[-1]) / previous_balance.iloc[-1]
+            cagr = (
+                balance.iloc[-1] - previous_balance.iloc[-1]
+            ) / previous_balance.iloc[-1]
         else:
             cagr = (balance.iloc[-1] - balance.iloc[0]) / balance.iloc[0]
         return cagr
 
     @staticmethod
-    def __get_mdd(balance: Series) -> float:
+    def get_mdd(balance: Series) -> float:
         """
         MDD(Max Draw Down)을 구하는 함수
         :param balance:
@@ -113,8 +107,9 @@ class Evaluator:
 
         return mdd.min()
 
-    def __get_stat_of_unit_period(self, daily_balance: DataFrame, index_day_price: DataFrame,
-                                    start_date, end_date) -> dict:
+    def get_stat_of_unit_period(
+        self, daily_balance: DataFrame, index_day_price: DataFrame, start_date, end_date
+    ) -> dict:
         """
         단위 기간 동안의 통계를 구하는 함수
         :param daily_balance:
@@ -131,25 +126,34 @@ class Evaluator:
         previous_sub_daily_balance = daily_balance.query(query)
         previous_sub_index_day_price = index_day_price.query(query)
 
-        trading_days, winning_rate, profit_loss_rate = self.__get_basic_stat(sub_daily_balance)
-        cagr = self.__get_cagr(previous_sub_daily_balance.balance, sub_daily_balance.balance)
-        mdd = self.__get_mdd(sub_daily_balance.balance)
-        index_cagr = self.__get_cagr(previous_sub_index_day_price.close, sub_index_day_price.close)
+        trading_days, winning_rate = self.get_winning_rate(sub_daily_balance)
+        profit_loss_rate = self.get_profit_loss_rate(sub_daily_balance)
+        cagr = self.get_cagr(
+            previous_sub_daily_balance.balance, sub_daily_balance.balance
+        )
+        mdd = self.get_mdd(sub_daily_balance.balance)
+        index_cagr = self.get_cagr(
+            previous_sub_index_day_price.close, sub_index_day_price.close
+        )
         relative_cagr = cagr - index_cagr
 
         period_dict = {
-            'trading_days': trading_days,
-            'winning_rate': winning_rate,
-            'profit_loss_rate': profit_loss_rate,
-            'cagr': cagr,
-            'mdd': mdd,
-            'index_cagr': index_cagr,
-            'relative_cagr': relative_cagr
+            "trading_days": trading_days,
+            "winning_rate": winning_rate,
+            "profit_loss_rate": profit_loss_rate,
+            "cagr": cagr,
+            "mdd": mdd,
+            "index_cagr": index_cagr,
+            "relative_cagr": relative_cagr,
         }
         return period_dict
 
-    def get_stat(self, daily_balance: DataFrame, compared_index: Universe,
-                 unit_period: UnitPeriod = UnitPeriod.year) -> DataFrame:
+    def get_stat(
+        self,
+        daily_balance: DataFrame,
+        compared_index: Universe,
+        unit_period: UnitPeriod = UnitPeriod.year,
+    ) -> DataFrame:
         """
         통계 결과를 반환하는 함수
         :param daily_balance:
@@ -157,17 +161,19 @@ class Evaluator:
         :param unit_period:
         :return:
         """
-        daily_balance['pnl'] = self.__get_pnl(daily_balance.balance)
-        daily_balance['daily_return'] = self.__get_return(daily_balance.balance)
+        daily_balance["pnl"] = self.get_pnl(daily_balance.balance)
+        daily_balance["daily_return"] = self.get_return(daily_balance.balance)
 
         start_date = daily_balance.date.iloc[0]
         end_date = daily_balance.date.iloc[-1]
 
-        index_day_price = self.__get_index_day_price(compared_index, start_date, end_date)
-        index_day_price = index_day_price.sort_values(by='date')
+        index_day_price = self._get_index_day_price(
+            compared_index, start_date, end_date
+        )
+        index_day_price = index_day_price.sort_values(by="date")
 
         result = {}
-        for year in range(start_date.year, end_date.year+1):
+        for year in range(start_date.year, end_date.year + 1):
 
             if unit_period == UnitPeriod.year:
                 if year == start_date.year:
@@ -177,10 +183,11 @@ class Evaluator:
                 if year == end_date.year:
                     sub_end_date = end_date + timedelta(days=1)
                 else:
-                    sub_end_date = date(year+1, 1, 1)
+                    sub_end_date = date(year + 1, 1, 1)
 
-                year_dict = self.__get_stat_of_unit_period(daily_balance,
-                                                           index_day_price, sub_start_date, sub_end_date)
+                year_dict = self.get_stat_of_unit_period(
+                    daily_balance, index_day_price, sub_start_date, sub_end_date
+                )
                 result[year] = year_dict
 
             else:
@@ -191,26 +198,28 @@ class Evaluator:
                 if year == end_date.year:
                     last_month = end_date.month
 
-                for month in range(start_month, last_month+1):
+                for month in range(start_month, last_month + 1):
 
                     sub_start_date = date(year, month, 1)
                     if month == 12:
-                        sub_end_date = date(year+1, 1, 1)
+                        sub_end_date = date(year + 1, 1, 1)
                     else:
-                        sub_end_date = date(year, month+1, 1)
+                        sub_end_date = date(year, month + 1, 1)
 
-                    month_dict = self.__get_stat_of_unit_period(daily_balance,
-                                                                index_day_price, sub_start_date, sub_end_date)
+                    month_dict = self.get_stat_of_unit_period(
+                        daily_balance, index_day_price, sub_start_date, sub_end_date
+                    )
                     month = "%02d" % month
                     result[f"{year}-{month}"] = month_dict
 
-        total_dict = self.__get_stat_of_unit_period(daily_balance,
-                                                    index_day_price, start_date, end_date+timedelta(days=1))
-        result['total'] = total_dict
+        total_dict = self.get_stat_of_unit_period(
+            daily_balance, index_day_price, start_date, end_date + timedelta(days=1)
+        )
+        result["total"] = total_dict
 
-        result = DataFrame.from_dict(result, orient='index')
+        result = DataFrame.from_dict(result, orient="index")
         result = result.round(decimals=4)
 
         new_column_name = f"{compared_index.name}_cagr"
-        result = result.rename(columns={'index_cagr': new_column_name})
+        result = result.rename(columns={"index_cagr": new_column_name})
         return result
