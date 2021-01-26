@@ -1,114 +1,216 @@
-from datetime import datetime
-from pandas import DataFrame, Series
+from typing import Tuple
 
-from utils.tools import year_to_date
+from datetime import date, timedelta
+from pandas import DataFrame, Series
+import pandas as pd
+
+from utils.executor import Executor
+from utils.generator import Generator
+from utils.parameter import Universe, UnitPeriod
 
 
 class Evaluator:
-    @staticmethod
-    def _get_profit(pnl: DataFrame, pnl_column='pnl') -> Series:
-        """거래 차익 컬럼 추가"""
-        profit = pnl[pnl_column].diff()
-        return profit
+
+    def __init__(self, executor: Executor):
+        self.generator = Generator(executor)
 
     @staticmethod
-    def _get_profit_rate(pnl: DataFrame, pnl_column='pnl', profit_column='profit') -> Series:
-        """이익율 컬럼 추가"""
-        profit_rate = pnl[profit_column] / pnl.shift(1)[pnl_column]
-        return profit_rate
-
-    @staticmethod
-    def _get_cumulative_yield(pnl: DataFrame) -> float:
-        """누적수익율"""
-        cumulative_yield = (pnl['pnl'].iloc[-1] - pnl['pnl'].iloc[0]) / pnl['pnl'].iloc[0]
-        return cumulative_yield
-
-    @staticmethod
-    def _get_winning_rate(pnl: DataFrame) -> (float, int):
-        """승률과 거래일을 구함"""
-        is_win = pnl.profit > 0
-
-        winning_rate = is_win.mean()
-        trading_days = is_win.count()
-        return winning_rate, trading_days
-
-    @staticmethod
-    def _get_profit_loss_rate(pnl: DataFrame) -> float:
-        """손익비"""
-        profit_pnl = pnl[pnl.profit_rate > 0]
-        loss_pnl = pnl[pnl.profit_rate < 0]
-        rate = (profit_pnl['profit_rate'].sum() / len(profit_pnl)) / (
-            abs(loss_pnl['profit_rate'].sum()) / len(loss_pnl))
-        return rate
-
-    @staticmethod
-    def _get_mdd(pnl: DataFrame) -> Series:
-        """최대 낙폭"""
-        ath = pnl.rolling(len(pnl), min_periods=1)['pnl'].max()
-        dd = pnl['pnl'] - ath
-        mdd = dd.rolling(len(dd), min_periods=1).min() / ath
-
-        return mdd
-
-    @staticmethod
-    def _get_shape_ratio(pnl: DataFrame) -> float:
-        """샤프 지수"""
-        return pnl['profit_rate'].mean() / pnl['profit_rate'].std()
-
-    @staticmethod
-    def _remove_non_trading_days(pnl: DataFrame) -> DataFrame:
-        """거래가 일어나지 않은 날짜 제거"""
-        pnl = pnl[pnl['profit'] != 0]
+    def __get_pnl(balance: Series) -> Series:
+        """
+        일별 잔고의 손익 계산
+        :param balance: 일별 잔고
+        :return: PNL (Profit and Loss)
+        """
+        pnl = balance.diff().fillna(0).apply(int)
         return pnl
 
+    @staticmethod
+    def __get_return(balance: Series) -> Series:
+        """
+        일별 수익률 계산
+        :param balance: 일별 잔고
+        :return: Return (일별 수익률)
+        """
+        daily_return = balance.pct_change(periods=1).fillna(0)
+        return daily_return
+
+    def __get_index_day_price(self, universe: Universe, start_date, end_date):
+        """
+        비교 지수의 일봉 구하는 함수
+        :param universe: 비교 지수
+        :param start_date: 시작 날짜
+        :param end_date: 끝 날짜
+        :return: 비교 지수의 일봉
+        """
+        index_day_price = self.generator.get_index_day_price_data(universe, start_date, end_date)
+        return index_day_price
+
+    @staticmethod
+    def __get_winning_rate(winning_pnl: Series, losing_pnl: Series) -> Tuple[int, float]:
+        """
+        거래일과 승률을 구하는 함수
+        :param winning_pnl:
+        :param losing_pnl:
+        :return:
+        """
+        winning_days = winning_pnl.count()
+        losing_days = losing_pnl.count()
+
+        trading_days = winning_days + losing_days
+        winning_rate = winning_days / (winning_days + losing_days)
+        return trading_days, winning_rate
+
+    @staticmethod
+    def __get_profit_loss_rate(winning_returns: Series, losing_returns) -> float:
+        """
+        손익비를 구하는 함수
+        :param winning_returns:
+        :param losing_returns:
+        :return:
+        """
+        profit_loss_rate = winning_returns.mean() / losing_returns.abs().mean()
+        return profit_loss_rate
+
     @classmethod
-    def pnl(cls, pnl: DataFrame) -> DataFrame:
+    def __get_basic_stat(cls, daily_balance: DataFrame) -> Tuple[int, float, float]:
         """
-        PNL 받아서 알파 성능 측정
-        :param pnl: DataFrame columns: date, pnl
-        :return: 거래일수, 승률, 손익비, 샤프지수, 최대 낙폭 퍼센트, 누적수익율
+        거래일, 승률, 손익비를 반환하는 함수
+        :param daily_balance:
+        :return:
         """
+        winning = daily_balance.query('pnl > 0')
+        losing = daily_balance.query('pnl < 0')
 
-        first = pnl.iloc[0].name  # type: datetime
-        last = pnl.iloc[-1].name  # type: datetime
+        trading_days, winning_rate = cls.__get_winning_rate(winning.pnl, losing.pnl)
+        profit_loss_rate = cls.__get_profit_loss_rate(winning.daily_return, losing.daily_return)
 
-        # 끝에 잘라냄
+        return trading_days, winning_rate, profit_loss_rate
 
-        result = {}
+    @staticmethod
+    def __get_cagr(previous_balance: Series, balance: Series) -> float:
+        """
+        누적 수익률을 구하는 함수
+        :param previous_balance:
+        :param balance:
+        :return:
+        """
+        if len(previous_balance) > 0:
+            cagr = (balance.iloc[-1] - previous_balance.iloc[-1]) / previous_balance.iloc[-1]
+        else:
+            cagr = (balance.iloc[-1] - balance.iloc[0]) / balance.iloc[0]
+        return cagr
 
-        pnl['profit'] = cls._get_profit(pnl)
-        pnl['profit_rate'] = cls._get_profit_rate(pnl)
-        pnl['mdd'] = cls._get_mdd(pnl)
-        pnl = pnl[1:]
-        raw_pnl = pnl.copy()
-        pnl = cls._remove_non_trading_days(pnl)
+    @staticmethod
+    def __get_mdd(balance: Series) -> float:
+        """
+        MDD(Max Draw Down)을 구하는 함수
+        :param balance:
+        :return:
+        """
+        ath = balance.rolling(len(balance), min_periods=1).max()
+        dd = balance - ath
+        mdd = dd.rolling(len(dd), min_periods=1).min() / ath
 
-        for year in range(first.year, last.year + 1):
-            start = year_to_date(year)
-            end = year_to_date(year + 1)
-            mask = (pnl.index >= start) & (pnl.index < end)
-            this_year_df = pnl[mask]
-            winning_rate, trading_days = cls._get_winning_rate(this_year_df)
-            mdd = this_year_df['mdd'].min()
-            year_dict = {
-                'trading_days': trading_days,
-                'winning_rate': winning_rate,
-                'profit_loss_rate': cls._get_profit_loss_rate(this_year_df),
-                'shape_ratio': cls._get_shape_ratio(this_year_df),
-                'mdd': mdd,
-                'cumulative_yield': cls._get_cumulative_yield(this_year_df),
-            }
-            result[year] = year_dict
+        return mdd.min()
 
-        winning_rate, trading_days = cls._get_winning_rate(pnl)
-        mdd = pnl['mdd'].min()
-        result['total'] = {
+    def __get_stat_of_unit_period(self, daily_balance: DataFrame, index_day_price: DataFrame,
+                                    start_date, end_date) -> dict:
+        """
+        단위 기간 동안의 통계를 구하는 함수
+        :param daily_balance:
+        :param index_day_price:
+        :param start_date:
+        :param end_date:
+        :return:
+        """
+        query = "(date >= @start_date) and (date < @end_date)"
+        sub_daily_balance = daily_balance.query(query)
+        sub_index_day_price = index_day_price.query(query)
+
+        query = "date < @start_date"
+        previous_sub_daily_balance = daily_balance.query(query)
+        previous_sub_index_day_price = index_day_price.query(query)
+
+        trading_days, winning_rate, profit_loss_rate = self.__get_basic_stat(sub_daily_balance)
+        cagr = self.__get_cagr(previous_sub_daily_balance.balance, sub_daily_balance.balance)
+        mdd = self.__get_mdd(sub_daily_balance.balance)
+        index_cagr = self.__get_cagr(previous_sub_index_day_price.close, sub_index_day_price.close)
+        relative_cagr = cagr - index_cagr
+
+        period_dict = {
             'trading_days': trading_days,
             'winning_rate': winning_rate,
-            'profit_loss_rate': cls._get_profit_loss_rate(pnl),
-            'shape_ratio': cls._get_shape_ratio(raw_pnl),
+            'profit_loss_rate': profit_loss_rate,
+            'cagr': cagr,
             'mdd': mdd,
-            'cumulative_yield': cls._get_cumulative_yield(raw_pnl),
+            'index_cagr': index_cagr,
+            'relative_cagr': relative_cagr
         }
-        year_df = DataFrame.from_dict(result, orient='index')
-        return year_df
+        return period_dict
+
+    def get_stat(self, daily_balance: DataFrame, compared_index: Universe,
+                 unit_period: UnitPeriod = UnitPeriod.year) -> DataFrame:
+        """
+        통계 결과를 반환하는 함수
+        :param daily_balance:
+        :param compared_index:
+        :param unit_period:
+        :return:
+        """
+        daily_balance['pnl'] = self.__get_pnl(daily_balance.balance)
+        daily_balance['daily_return'] = self.__get_return(daily_balance.balance)
+
+        start_date = daily_balance.date.iloc[0]
+        end_date = daily_balance.date.iloc[-1]
+
+        index_day_price = self.__get_index_day_price(compared_index, start_date, end_date)
+        index_day_price = index_day_price.sort_values(by='date')
+
+        result = {}
+        for year in range(start_date.year, end_date.year+1):
+
+            if unit_period == UnitPeriod.year:
+                if year == start_date.year:
+                    sub_start_date = start_date
+                else:
+                    sub_start_date = date(year, 1, 1)
+                if year == end_date.year:
+                    sub_end_date = end_date + timedelta(days=1)
+                else:
+                    sub_end_date = date(year+1, 1, 1)
+
+                year_dict = self.__get_stat_of_unit_period(daily_balance,
+                                                           index_day_price, sub_start_date, sub_end_date)
+                result[year] = year_dict
+
+            else:
+                start_month = 1
+                last_month = 12
+                if year == start_date.year:
+                    start_month = start_date.month
+                if year == end_date.year:
+                    last_month = end_date.month
+
+                for month in range(start_month, last_month+1):
+
+                    sub_start_date = date(year, month, 1)
+                    if month == 12:
+                        sub_end_date = date(year+1, 1, 1)
+                    else:
+                        sub_end_date = date(year, month+1, 1)
+
+                    month_dict = self.__get_stat_of_unit_period(daily_balance,
+                                                                index_day_price, sub_start_date, sub_end_date)
+                    month = "%02d" % month
+                    result[f"{year}-{month}"] = month_dict
+
+        total_dict = self.__get_stat_of_unit_period(daily_balance,
+                                                    index_day_price, start_date, end_date+timedelta(days=1))
+        result['total'] = total_dict
+
+        result = DataFrame.from_dict(result, orient='index')
+        result = result.round(decimals=4)
+
+        new_column_name = f"{compared_index.name}_cagr"
+        result = result.rename(columns={'index_cagr': new_column_name})
+        return result

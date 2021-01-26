@@ -34,3 +34,8 @@ class KindOfAverage(Enum):
     max = 3
     first = 4
     dense = 5
+
+
+class UnitPeriod(Enum):
+    month = 1
+    year = 2
