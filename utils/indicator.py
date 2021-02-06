@@ -25,7 +25,6 @@ def sma(price: Series, period: int) -> Series:
     5일간 종가의 단순 이동평균은 다음과 같이 구합니다.
     (당일 종가 + 1일 전 종가 + 2일 전 종가 + 3일 전 종가 + 4일 전 종가) / 5
 
-    :한글 : 단순이동평균
     :param price: 단순 이동평균을 구하는데 사용하는 가격 ex) 시가, 고가, 저가, 종가
     :param period: 단순 이동평균을 구하는데 사용하는 기간
     :return:
