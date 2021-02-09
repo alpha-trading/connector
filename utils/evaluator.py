@@ -41,9 +41,7 @@ class Evaluator:
         :param end_date: 끝 날짜
         :return: 비교 지수의 일봉
         """
-        index_day_price = self.generator.get_index_day_price_data(
-            universe, start_date, end_date
-        )
+        index_day_price = self.generator.get_index_day_price_data(universe, start_date, end_date)
         return index_day_price
 
     @staticmethod
@@ -73,9 +71,7 @@ class Evaluator:
         winning = daily_balance.query("pnl > 0")
         losing = daily_balance.query("pnl < 0")
 
-        profit_loss_rate = (
-            winning.daily_return.mean() / losing.daily_return.abs().mean()
-        )
+        profit_loss_rate = winning.daily_return.mean() / losing.daily_return.abs().mean()
         return profit_loss_rate
 
     @staticmethod
@@ -87,9 +83,7 @@ class Evaluator:
         :return:
         """
         if len(previous_balance) > 0:
-            cagr = (
-                balance.iloc[-1] - previous_balance.iloc[-1]
-            ) / previous_balance.iloc[-1]
+            cagr = (balance.iloc[-1] - previous_balance.iloc[-1]) / previous_balance.iloc[-1]
         else:
             cagr = (balance.iloc[-1] - balance.iloc[0]) / balance.iloc[0]
         return cagr
@@ -128,13 +122,9 @@ class Evaluator:
 
         trading_days, winning_rate = self.get_winning_rate(sub_daily_balance)
         profit_loss_rate = self.get_profit_loss_rate(sub_daily_balance)
-        cagr = self.get_cagr(
-            previous_sub_daily_balance.balance, sub_daily_balance.balance
-        )
+        cagr = self.get_cagr(previous_sub_daily_balance.balance, sub_daily_balance.balance)
         mdd = self.get_mdd(sub_daily_balance.balance)
-        index_cagr = self.get_cagr(
-            previous_sub_index_day_price.close, sub_index_day_price.close
-        )
+        index_cagr = self.get_cagr(previous_sub_index_day_price.close, sub_index_day_price.close)
         relative_cagr = cagr - index_cagr
 
         period_dict = {
@@ -149,10 +139,7 @@ class Evaluator:
         return period_dict
 
     def get_stat(
-        self,
-        daily_balance: DataFrame,
-        compared_index: Universe,
-        unit_period: UnitPeriod = UnitPeriod.year,
+        self, daily_balance: DataFrame, compared_index: Universe, unit_period: UnitPeriod = UnitPeriod.year
     ) -> DataFrame:
         """
         통계 결과를 반환하는 함수
@@ -167,9 +154,7 @@ class Evaluator:
         start_date = daily_balance.date.iloc[0]
         end_date = daily_balance.date.iloc[-1]
 
-        index_day_price = self._get_index_day_price(
-            compared_index, start_date, end_date
-        )
+        index_day_price = self._get_index_day_price(compared_index, start_date, end_date)
         index_day_price = index_day_price.sort_values(by="date")
 
         result = {}
@@ -185,9 +170,7 @@ class Evaluator:
                 else:
                     sub_end_date = date(year + 1, 1, 1)
 
-                year_dict = self.get_stat_of_unit_period(
-                    daily_balance, index_day_price, sub_start_date, sub_end_date
-                )
+                year_dict = self.get_stat_of_unit_period(daily_balance, index_day_price, sub_start_date, sub_end_date)
                 result[year] = year_dict
 
             else:
