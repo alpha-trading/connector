@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "utils"
-version = "3.7.2"
+version = "3.8.2"
 description = "Alpha trading utils with pandas"
 authors = ["yangroro <yang@heechan.kr>"]
 license = "MIT"
