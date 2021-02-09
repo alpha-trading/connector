@@ -3,13 +3,13 @@ from typing import Tuple
 from pandas import DataFrame, Series
 import numpy as np
 
-from utils.function import stddev
+from utils.function import ts_stddev
 from utils.parameter import MovingAverage
 
 
 def sma(price: Series, period: int) -> Series:
     """
-    단순 이동평균
+    단순이동평균
 
     <설명>
     단순 이동평균을 구하는 함수입니다.
@@ -25,8 +25,8 @@ def sma(price: Series, period: int) -> Series:
     5일간 종가의 단순 이동평균은 다음과 같이 구합니다.
     (당일 종가 + 1일 전 종가 + 2일 전 종가 + 3일 전 종가 + 4일 전 종가) / 5
 
-    :param price: 단순 이동평균을 구하는데 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param period: 단순 이동평균을 구하는데 사용하는 기간
+    :param price: (가격데이터) 단순 이동평균을 구하는데 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 단순 이동평균을 구하는데 사용하는 기간
     :return:
     """
     return price.rolling(window=period).mean()
@@ -34,7 +34,7 @@ def sma(price: Series, period: int) -> Series:
 
 def ema(price: Series, period: int) -> Series:
     """
-    지수 이동평균
+    지수이동평균
 
     <설명>
     지수 이동평균을 구하는 함수입니다.
@@ -51,8 +51,8 @@ def ema(price: Series, period: int) -> Series:
     당일 지수 이동평균 = 당일 종가 * 평활 계수 + 전일 지수 이동평균 * (1 - 평활 계수)
     평활 계수 = 2 / (5 + 1)
 
-    :param price: 지수 이동평균을 구하는데 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param period: 지수 이동평균을 구하는데 사용하는 기간
+    :param price: (가격데이터) 지수 이동평균을 구하는데 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 지수 이동평균을 구하는데 사용하는 기간
     :return:
     """
     return price.ewm(span=period, min_periods=period, adjust=False).mean()
@@ -64,7 +64,7 @@ def ewma(price: Series, period: int) -> Series:
 
 def wma(price: Series, period: int) -> Series:
     """
-    가중 이동평균
+    가중이동평균
 
     <설명>
     가중 이동평균을 구하는 함수입니다.
@@ -80,8 +80,8 @@ def wma(price: Series, period: int) -> Series:
     5일간 종가의 가중 이동평균은 다음과 같이 구합니다.
     (당일 종가 * 5 + 1일 전 종가 * 4 + 2일 전 종가 * 3 + 3일 전 종가 * 2 + 4일 전 종가 * 1) / (5 + 4 + 3 + 2 + 1)
 
-    :param price: 가중 이동평균을 구하는데 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param period: 가중 이동평균을 구하는데 사용하는 기간
+    :param price: (가격데이터) 가중 이동평균을 구하는데 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 가중 이동평균을 구하는데 사용하는 기간
     :return:
     """
     weight = np.arange(1, period + 1)
@@ -100,7 +100,7 @@ def _bollinger_band(
         line_mid = ewma(price, period)
     elif moving_average == MovingAverage.wma:
         line_mid = wma(price, period)
-    line_std = stddev(price, period, ddof=0)
+    line_std = ts_stddev(price, period, ddof=0)
     bollinger_range = line_std.multiply(multiplier)
 
     return line_mid, bollinger_range
@@ -108,7 +108,7 @@ def _bollinger_band(
 
 def bollinger_upper(price: Series, period: int, moving_average: MovingAverage, multiplier: int) -> Series:
     """
-    볼린저 밴드 상한선
+    볼린저밴드상한선
 
     <설명>
     볼린저 밴드 상한선(상향 밴드)을 구하는 함수입니다.
@@ -124,10 +124,10 @@ def bollinger_upper(price: Series, period: int, moving_average: MovingAverage, m
     예를 들어, 20일간 종가의 단순 이동평균으로 중간 밴드를 구하고 상향 밴드는 중간 밴드에 20일간 종가의 표준편차에 2배를 더한 값을 사용하고자 할 경우
     'bollinger_upper(close, 20, sma, 2)' 또는 '볼린저밴드상한선(종가, 20, 단순이동평균, 2)'와 같이 작성하면 됩니다.
 
-    :param price: 상향 밴드를 구하는데 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param period: 상향 밴드를 구하는데 사용하는 기간
-    :param moving_average: 중간 밴드를 구할 때 사용하는 이동평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
-    :param multiplier: 상향 밴드를 구할 때 사용하는 표준편차 승수
+    :param price: (가격데이터) 상향 밴드를 구하는데 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 상향 밴드를 구하는데 사용하는 기간
+    :param moving_average: (이동평균종류) 중간 밴드를 구할 때 사용하는 이동평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param multiplier: (승수값) 상향 밴드를 구할 때 사용하는 표준편차 승수
     :return:
     """
     line_mid, bollinger_range = _bollinger_band(price, period, moving_average, multiplier)
@@ -136,7 +136,7 @@ def bollinger_upper(price: Series, period: int, moving_average: MovingAverage, m
 
 def bollinger_lower(price: Series, period: int, moving_average: MovingAverage, multiplier: int) -> Series:
     """
-    볼린저 밴드 하한선
+    볼린저밴드하한선
 
     <설명>
     볼린저 밴드 하한선(하향 밴드)을 구하는 함수입니다.
@@ -152,33 +152,33 @@ def bollinger_lower(price: Series, period: int, moving_average: MovingAverage, m
     예를 들어, 20일간 종가의 단순 이동평균으로 중간 밴드를 구하고 하향 밴드는 중간 밴드에 20일간 종가의 표준편차에 2배를 뺀 값을 사용하고자 할 경우
     'bollinger_lower(close, 20, sma, 2)' 또는 '볼린저밴드하한선(종가, 20, 단순이동평균, 2)'와 같이 작성하면 됩니다.
 
-    :param price: 하향 밴드를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param period: 하향 밴드를 구하는데 사용하는 기간
-    :param moving_average: 중간 밴드를 구할 때 사용하는 이동평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
-    :param multiplier: 하향 밴드를 구할 때 사용하는 표준편차 승수
+    :param price: (가격데이터) 하향 밴드를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 하향 밴드를 구하는데 사용하는 기간
+    :param moving_average: (이동평균종류) 중간 밴드를 구할 때 사용하는 이동평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param multiplier: (승수값) 하향 밴드를 구할 때 사용하는 표준편차 승수
     :return:
     """
     line_mid, bollinger_range = _bollinger_band(price, period, moving_average, multiplier)
     return line_mid - bollinger_range
 
 
-def _envelope(price: Series, day: int, moving_average: MovingAverage, ratio: float) -> Tuple[Series, Series]:
+def _envelope(price: Series, period: int, moving_average: MovingAverage, ratio: float) -> Tuple[Series, Series]:
     if moving_average == MovingAverage.sma:
-        line_mid = sma(price, day)
+        line_mid = sma(price, period)
     elif moving_average == MovingAverage.ema:
-        line_mid = ema(price, day)
+        line_mid = ema(price, period)
     elif moving_average == MovingAverage.ewma:
-        line_mid = ewma(price, day)
+        line_mid = ewma(price, period)
     elif moving_average == MovingAverage.wma:
-        line_mid = wma(price, day)
+        line_mid = wma(price, period)
 
     envelope_range = line_mid.multiply(ratio)
     return line_mid, envelope_range
 
 
-def envelope_upper(price: Series, day: int, moving_average: MovingAverage, ratio: float) -> Series:
+def envelope_upper(price: Series, period: int, moving_average: MovingAverage, ratio: float) -> Series:
     """
-    엔벨로프 상한선
+    엔벨로프상한선
 
     <설명>
     엔벨로프 상한선을 구하는 함수입니다.
@@ -192,19 +192,19 @@ def envelope_upper(price: Series, day: int, moving_average: MovingAverage, ratio
     예를 들어, 20일간 종가의 단순 이동평균으로 기준선을 구하고 엔벨로프 상한선은 기준선에서 8% 위의 선으로 하고자 하는 경우
     'envelope_upper(close, 20, sma, 0.08)' 또는 엔벨로프상한선(종가, 20, 단순이동평균, 0.08)'과 같이 작성하면 됩니다.
 
-    :param price: 엔벨로프 상한선을 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param day: 엔벨로프 상한선을 구하는데 사용하는 기간
-    :param moving_average: 엔벨로프 상한선을 구하는데 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
-    :param ratio: 엔벨로프 상한선을 구하는데 사용하는 비율
+    :param price: (가격데이터) 엔벨로프 상한선을 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 엔벨로프 상한선을 구하는데 사용하는 기간
+    :param moving_average: (이동평균종류) 엔벨로프 상한선을 구하는데 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param ratio: (비율) 엔벨로프 상한선을 구하는데 사용하는 비율
     :return:
     """
-    line_mid, envelope_range = _envelope(price, day, moving_average, ratio)
+    line_mid, envelope_range = _envelope(price, period, moving_average, ratio)
     return line_mid + envelope_range
 
 
-def envelope_lower(price: Series, day: int, moving_average: MovingAverage, ratio: float) -> Series:
+def envelope_lower(price: Series, period: int, moving_average: MovingAverage, ratio: float) -> Series:
     """
-    엔벨로프 하한선
+    엔벨로프하한선
 
     <설명>
     엔벨로프 하한선을 구하는 함수입니다.
@@ -218,19 +218,19 @@ def envelope_lower(price: Series, day: int, moving_average: MovingAverage, ratio
     예를 들어, 20일간 종가의 단순 이동평균으로 기준선을 구하고 엔벨로프 하한선은 기준선에서 8% 아래의 선으로 하고자 하는 경우
     'envelope_lower(close, 20, sma, 0.08)' 또는 '엔벨로프하한선(종가, 20, 단순이동평균, 0.08)'과 같이 작성하면 됩니다.
 
-    :param price: 엔벨로프 하한선을 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param day: 엔벨로프 하한선을 구하는 기간
-    :param moving_average: 엔벨로프 하한선을 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
-    :param ratio: 엔벨로프 상한선을 구하는데 사용하는 비율
+    :param price: (가격데이터) 엔벨로프 하한선을 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 엔벨로프 하한선을 구하는 기간
+    :param moving_average: (이동평균종류) 엔벨로프 하한선을 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param ratio: (비율) 엔벨로프 상한선을 구하는데 사용하는 비율
     :return:
     """
-    line_mid, envelope_range = _envelope(price, day, moving_average, ratio)
+    line_mid, envelope_range = _envelope(price, period, moving_average, ratio)
     return line_mid - envelope_range
 
 
 def price_channel_upper(price_high: Series, period: int) -> Series:
     """
-    가격 채널 상한선
+    가격채널상한선
 
     <설명>
     가격 채널 상한선을 구하는 함수입니다.
@@ -242,8 +242,8 @@ def price_channel_upper(price_high: Series, period: int) -> Series:
     예를 들어, 20일간 채널 지표 상한선을 구하고자 하는 경우
     'price_channel_upper(high, 20)' 또는 '가격채널상한선(고가, 20)'과 같이 작성하면 됩니다.
 
-    :param price_high: 고가
-    :param period: 가격 채널 상한선을 구할 때 사용하는 기간
+    :param price_high: (고가) 고가
+    :param period: (기간) 가격 채널 상한선을 구할 때 사용하는 기간
     :return:
     """
     return price_high.shift(1).rolling(window=period).max()
@@ -251,7 +251,7 @@ def price_channel_upper(price_high: Series, period: int) -> Series:
 
 def price_channel_lower(price_low: Series, period: int) -> Series:
     """
-    가격 채널 하한선
+    가격채널하한선
 
     <설명>
     가격 채널 하한선을 구하는 함수입니다.
@@ -263,8 +263,8 @@ def price_channel_lower(price_low: Series, period: int) -> Series:
     예를 들어, 20일간 채널 지표 하한선을 구하고자 하는 경우
     'price_channel_lower(low, 20)' 또는 '가격채널하한선(저가, 20)'과 같이 작성하면 됩니다.
 
-    :param price_low: 저가
-    :param period: 가격 채널 상한선을 구하는 기간
+    :param price_low: (저가) 저가
+    :param period: (기간) 가격 채널 상한선을 구하는 기간
     :return:
     """
     return price_low.shift(1).rolling(window=period).min()
@@ -302,11 +302,11 @@ def pdi(
     예를 들어, 지수 이동 평균을 이용한 14일간 매수방향지표(PDI)를 구하고자 하는 경우
     'pdi(high, low, close, 14, ema)' 또는 '매수방향지표(고가, 저가, 종가, 14, 지수이동평균)'과 같이 작성하면 됩니다.
 
-    :param price_high: 고가
-    :param price_low: 저가
-    :param price_close: 종가
-    :param period: 매수방향지표(PDI)를 구하는데 사용하는 기간
-    :param moving_average: 매수방향지표(PDI)를 구하는데 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :param period: (기간) 매수방향지표(PDI)를 구하는데 사용하는 기간
+    :param moving_average: (이동평균종류) 매수방향지표(PDI)를 구하는데 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
     pdm = np.where(
@@ -356,11 +356,11 @@ def mdi(
     예를 들어, 지수 이동 평균을 이용한 14일간 매도방향지표(MDI)를 구하고자 하는 경우
     'mdi(high, low, close, 14, ema)' 또는 '매도방향지표(고가, 저가, 종가, 14, 지수이동평균)'과 같이 작성하면 됩니다.
 
-    :param price_high: 고가
-    :param price_low: 저가
-    :param price_close: 종가
-    :param period: 매도방향지표(MDI)를 구하는데 사용하는 기간
-    :param moving_average: 매도방향지표(MDI)를 구하는데 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :param period: (기간) 매도방향지표(MDI)를 구하는데 사용하는 기간
+    :param moving_average: (이동평균종류) 매도방향지표(MDI)를 구하는데 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
     mdm = np.where(
@@ -412,11 +412,11 @@ def adx(
     예를 들어, 지수 이동 평균을 이용한 14일간 ADX를 구하고자 하는 경우
     'adx(high, low, close, 14, ema)' 또는 '평균방향이동지표(고가, 저가, 종가, 14, 지수이동평균)'과 같이 작성하면 됩니다.
 
-    :param price_high: 고가
-    :param price_low: 저가
-    :param price_close: 종가
-    :param period: ADX를 구하는데 사용하는 기간
-    :param moving_average: ADX를 구하는데 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :param period: (기간) ADX를 구하는데 사용하는 기간
+    :param moving_average: (이동평균종류) ADX를 구하는데 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
 
@@ -450,10 +450,10 @@ def macd(price: Series, short_period: int, long_period: int, moving_average: Mov
     예를 들어, 12일간 종가의 단순 이동 평균과 26일간 종가의 단순 이동 평균을 이용하여 이동평균수렴확산지수(MACD)를 구하고자 하는 경우에는
     'macd(close, 12, 26, sma)' 또는 '이동평균수렴확산지수(종가, 12, 26, 단순이동평균)'과 같이 작성하면 됩니다.
 
-    :param price: 이동평균수렴확산지수(MACD)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param short_period: 단기 이동 평균을 구하는데 사용하는 기간
-    :param long_period: 장기 이동 평균을 구하는데 사용하는 기간
-    :param moving_average: 이동평균수렴확산지수(MACD)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price: (가격데이터) 이동평균수렴확산지수(MACD)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param short_period: (단기이동평균기간) 단기 이동 평균을 구하는데 사용하는 기간
+    :param long_period: (장기이동평균기간) 장기 이동 평균을 구하는데 사용하는 기간
+    :param moving_average: (이동평균종류) 이동평균수렴확산지수(MACD)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
     if moving_average == MovingAverage.sma:
@@ -492,11 +492,11 @@ def macd_signal(
     이동평균수렴확산시그널(MACD_signal)을 구하고자 하는 경우에는
     'macd_signal(close, 12, 26, 9, sma)' 또는 '이동평균수렴확산시그널(종가, 12, 26, 9, 단순이동평균)'과 같이 작성하면 됩니다.
 
-    :param price: 이동평균수렴확산시그널(MACD_signal)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param short_period: 단기 이동 평균을 구하는데 사용하는 기간
-    :param long_period: 장기 이동 평균을 구하는데 사용하는 기간
-    :param signal_period: 이동평균수렴확산시그널(MACD_signal)를 구할 때 사용하는 시그널 기간
-    :param moving_average: 이동평균수렴확산시그널(MACD_signal)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price: (기간) 이동평균수렴확산시그널(MACD_signal)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param short_period: (단기이동평균기간) 단기 이동 평균을 구하는데 사용하는 기간
+    :param long_period: (장기이동평균기간) 장기 이동 평균을 구하는데 사용하는 기간
+    :param signal_period: (시그널기간) 이동평균수렴확산시그널(MACD_signal)를 구할 때 사용하는 시그널 기간
+    :param moving_average: (이동평균종류) 이동평균수렴확산시그널(MACD_signal)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
     macd_val = macd(price, short_period, long_period, moving_average)
@@ -532,11 +532,11 @@ def macd_oscillator(
     이동평균수렴확산오실레이터(MACD_oscillator)를 구하고자 하는 경우에는
     'macd_oscillator(close, 12, 26, 9, sma)' 또는 '이동평균수렴확산오실레이터(종가, 12, 26, 9, 단순이동평균)'과 같이 작성하면 됩니다.
 
-    :param price: 이동평균수렴확산오실레이터(MACD_oscillator)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param short_period: 단기 이동 평균을 구하는데 사용하는 기간
-    :param long_period: 장기 이동 평균을 구하는데 사용하는 기간
-    :param signal_period: 이동평균수렴확산오실레이터(MACD_oscillator)를 구할 때 사용하는 시그널 기간
-    :param moving_average: 이동평균수렴확산오실레이터(MACD_oscillator)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price: (가격데이터) 이동평균수렴확산오실레이터(MACD_oscillator)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param short_period: (단기이동평균기간) 단기 이동 평균을 구하는데 사용하는 기간
+    :param long_period: (장기이동평균기간) 장기 이동 평균을 구하는데 사용하는 기간
+    :param signal_period: (시그널기간) 이동평균수렴확산오실레이터(MACD_oscillator)를 구할 때 사용하는 시그널 기간
+    :param moving_average: (이동평균종류) 이동평균수렴확산오실레이터(MACD_oscillator)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
     macd_val = macd(price, short_period, long_period, moving_average)
@@ -568,9 +568,9 @@ def volume_ratio(price: Series, volume: Series, period: int) -> Series:
     예를 들어, 20일간의 종가를 이용한 거래량비율(Volume Ratio)을 구하고자 하는 경우에는
     'volume_ratio(close, volume, 20)' 또는 '거래량비율(종가, 거래량, 20)'과 같이 작성하면 됩니다.
 
-    :param price: 거래량비율(Volume Ratio)을 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param volume: 거래량
-    :param period: 거래량비율(Volume Ratio)을 구하는데 사용하는 기간
+    :param price: (가격데이터) 거래량비율(Volume Ratio)을 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param volume: (거래량) 거래량
+    :param period: (기간) 거래량비율(Volume Ratio)을 구하는데 사용하는 기간
     :return:
     """
     up = np.where(price.diff(1).gt(0), volume, 0)
@@ -603,8 +603,8 @@ def psychological_line(price: Series, period: int) -> Series:
     10일간의 종가를 이용한 투자심리도(Psychological Line)는 다음과 같이 구합니다.
     (10일간 전일 종가 대비 상승 일수) / 10
 
-    :param price: 투자심리도(Psychological Line)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param period: 투자심리도(Psychological Line)를 구하는데 사용하는 기간
+    :param price: (가격데이터) 투자심리도(Psychological Line)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 투자심리도(Psychological Line)를 구하는데 사용하는 기간
     :return:
     """
     up = np.where(price.diff(1).gt(0), 1, 0)
@@ -627,8 +627,8 @@ def new_psychological_line(price: Series, period: int) -> Series:
     예를 들어, 10일간의 종가를 이용한 신심리도(New Psychological Line)를 구하고자 하는 경우에는
     'new_psychological_line(close, 10)' 또는 '신심리도(종가, 10)'과 같이 작성하면 됩니다.
 
-    :param price: 신심리도(New Psychological Line)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param period: 신심리도(New Psychological Line)를 구하는데 사용하는 기간
+    :param price: (가격데이터) 신심리도(New Psychological Line)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 신심리도(New Psychological Line)를 구하는데 사용하는 기간
     :return:
     """
     up_cnt = np.where(price.diff(1).gt(0), 1, 0)
@@ -665,9 +665,9 @@ def disparity(price: Series, period: int, moving_average: MovingAverage) -> Seri
     예를 들어, 종가와 5일간의 단순 이동평균을 이용한 이격도(Disparity)를 구하고자 하는 경우에는
     'disparity(close, 5, sma)' 또는 '이격도(종가, 5, 단순이동평균)'과 같이 작성하면 됩니다.
 
-    :param price: 이격도(Disparity)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param period: 이격도(Disparity)를 구하는데 사용하는 기간
-    :param moving_average: 이격도(Disparity)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price: (가격데이터) 이격도(Disparity)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 이격도(Disparity)를 구하는데 사용하는 기간
+    :param moving_average: (이동평균종류) 이격도(Disparity)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
     if moving_average == MovingAverage.sma:
@@ -697,9 +697,9 @@ def ibs(price_high: Series, price_low: Series, price_close: Series) -> Series:
     <계산 방법>
     (종가 - 저가) / (고가 - 저가)
 
-    :param price_high: 고가
-    :param price_low: 저가
-    :param price_close: 종가
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
     :return:
     """
     return (price_close - price_low) / (price_high - price_low)
@@ -718,9 +718,9 @@ def upper_tail_ratio(price_open: Series, price_high: Series, price_close: Series
     세 번째 인자에는 종가를 적으면 됩니다.
     윗꼬리비율은 'upper_tail_ratio(open, high, close)' 또는 '윗꼬리비율(시가, 고가, 종가)'과 같이 작성하면 됩니다.
 
-    :param price_open: 시가
-    :param price_high: 고가
-    :param price_close: 종가
+    :param price_open: (시가) 시가
+    :param price_high: (고가) 고가
+    :param price_close: (종가) 종가
     :return:
     """
     price_upper = np.where(price_open >= price_open, price_open, price_close)
@@ -743,9 +743,9 @@ def lower_tail_ratio(price_open: Series, price_low: Series, price_close: Series)
     아랫꼬리비율을 구하고자 하는 경우에는
     'lower_tail_ratio(open, low, close)' 또는 '아랫꼬리비율(시가, 저가, 종가)'과 같이 작성하면 됩니다.
 
-    :param price_open: 시가
-    :param price_low: 저가
-    :param price_close: 종가
+    :param price_open: (시가) 시가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
     :return:
     """
     price_under = np.where(price_open >= price_open, price_close, price_open)
@@ -770,10 +770,10 @@ def a_ratio(price_open: Series, price_high: Series, price_low: Series, period: i
     예를 들어, 26일간의 A Ratio를 구하고자 하는 경우에는
     'a_ratio(open, high, low, 26)' 또는 '에이비율(시가, 고자, 저가, 26)'과 같이 작성하면 됩니다.
 
-    :param price_open: 시가
-    :param price_high: 고가
-    :param price_low: 저가
-    :param period: A Ratio를 구하는데 사용하는 기간
+    :param price_open: (시가) 시가
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param period: (기간) A Ratio를 구하는데 사용하는 기간
     :return:
     """
     strength = price_high - price_open
@@ -797,10 +797,10 @@ def b_ratio(price_high: Series, price_low: Series, price_close: Series, period: 
     예를 들어, 26일간의 B Ratio를 구하고자 하는 경우에는
     'b_ratio(high, low, close, 26)' 또는 '비비율(고가, 저가, 종가, 26)'과 같이 작성하면 됩니다.
 
-    :param price_high: 고가
-    :param price_low: 저가
-    :param price_close: 종가
-    :param period: B Ratio를 구하는데 사용하는 기간
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :param period: (기간) B Ratio를 구하는데 사용하는 기간
     :return:
     """
     strength = price_high - price_close.shift(1)
@@ -826,10 +826,10 @@ def mass_index(
     예를 들어, 단순 이동평균을 이용한 25일간 질량지수(Mass Index)를 구하고자 하는 경우에는
     'mass_index(high, low, 25, sma)' 또는 '질량지수(고가, 저가, 25, 단순이동평균)'과 같이 작성하면 됩니다.
 
-    :param price_high: 고가
-    :param price_low: 저가
-    :param period: 질량지수(Mass Index)를 구하는데 사용하는 기간
-    :param moving_average: 질량지수(Mass Index)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param period: (기간) 질량지수(Mass Index)를 구하는데 사용하는 기간
+    :param moving_average: (이동평균종류) 질량지수(Mass Index)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
     day_range = price_high - price_low
@@ -867,10 +867,10 @@ def mao(price: Series, short_period: int, long_period: int, moving_average: Movi
     예를 들어, 5일간 종가의 단순 이동 평균과 10일간 종가의 단순 이동 평균을 사용하여 이동평균오실레이터(MAO)를 구하고자 하는 경우에는
     'mao(close, 5, 10, sma)' 또는 '이동평균오실레이터(종가, 5, 10, 단순이동평균)'과 같이 작성하면 됩니다.
 
-    :param price: 이동평균오실레이터(MAO)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param short_period: 단기 이동 평균을 구하는데 사용하는 기간
-    :param long_period: 장기 이동 평균을 구하는데 사용하는 기간
-    :param moving_average: 이동평균오실레이터(MAO)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price: (기간) 이동평균오실레이터(MAO)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param short_period: (단기이동평균기간) 단기 이동 평균을 구하는데 사용하는 기간
+    :param long_period: (장기이동평균기간) 장기 이동 평균을 구하는데 사용하는 기간
+    :param moving_average: (이동평균종류) 이동평균오실레이터(MAO)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
 
@@ -900,10 +900,10 @@ def sonar(price: Series, period: int, sonar_period: int, moving_average: MovingA
     예를 들어, 20일간 종가의 지수 이동 평균과 9일전 지수 이동 평균을 이용하여 소나(Sonar)를 구하고자 하는 경우에는
     'sonar(close, 20, 9, ema)' 또는 '소나(종가, 20, 9, 지수이동평균)'과 같이 작성하면 됩니다.
 
-    :param price: 소나(Sonar)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param period: 이동 평균을 구하는데 사용하는 기간
-    :param sonar_period: 사용하고자 하는 과거 이동 평균 값의 기간
-    :param moving_average: 소나(Sonar)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price: (가격데이터) 소나(Sonar)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 이동 평균을 구하는데 사용하는 기간
+    :param sonar_period: (소나기간) 사용하고자 하는 과거 이동 평균 값의 기간
+    :param moving_average: (이동평균종류) 소나(Sonar)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
     if moving_average == MovingAverage.sma:
@@ -937,11 +937,11 @@ def sonar_signal(
     예를 들어, 20일간 종가의 지수 이동 평균과 9일전 지수 이동 평균을 이용하여 시그널 기간이 9인 소나시그널(Sonar Signal)를 구하고자 하는 경우에는
     'sonar_signal(close, 20, 9, 9, ema)' 또는 '소나시그널(종가, 20, 9, 9, 지수이동평균)'과 같이 작성하면 됩니다.
 
-    :param price: 소나(Sonar)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
-    :param period: 이동 평균을 구하는데 사용하는 기간
-    :param sonar_period: 사용하고자 하는 과거 이동 평균 값의 기간
-    :param signal_period: 소나시그널(Sonar Signal)을 구하는데 사용하는 소나(Sonar)의 이동 평균 기간
-    :param moving_average: 소나(Sonar)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price: (가격데이터) 소나(Sonar)를 구할 때 사용하는 가격 ex) 시가, 고가, 저가, 종가
+    :param period: (기간) 이동 평균을 구하는데 사용하는 기간
+    :param sonar_period: (소나기간) 사용하고자 하는 과거 이동 평균 값의 기간
+    :param signal_period: (시그널기간) 소나시그널(Sonar Signal)을 구하는데 사용하는 소나(Sonar)의 이동 평균 기간
+    :param moving_average: (이동평균종류) 소나(Sonar)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
     sonar_val = sonar(price, period, sonar_period, moving_average)
@@ -973,11 +973,11 @@ def mfi(price_high: Series, price_low: Series, price_close: Series, vol: Series,
     예를 들어, 14일간 자금흐름지수(MFI)를 구하고자 하는 경우에는
     'mfi(high, low, close, volume, 14)' 또는 '자금흐름지수(고가, 저가, 종가, 거래량, 14)'과 같이 작성하면 됩니다.
 
-    :param price_high: 고가
-    :param price_low: 저가
-    :param price_close: 종가
-    :param vol: 거래량
-    :param period: 자금흐름지수(MFI)를 구하는데 사용하는 기간
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :param vol: (거래량) 거래량
+    :param period: (기간) 자금흐름지수(MFI)를 구하는데 사용하는 기간
     :return:
     """
     typical_price = (price_high + price_low + price_close) / 3
@@ -1007,9 +1007,9 @@ def trix(price: Series, period: int, moving_average: MovingAverage) -> Series:
     예를 들어, 10일간 종가의 지수 이동 평균으로 트라이엄프엑스(TRIX)를 구하고자 하는 경우에는
     'trix(close, 10, ema)' 또는 '소나시그널(종가, 10, 지수이동평균)'과 같이 작성하면 됩니다.
 
-    :param price: 트라이엄프엑스(TRIX)를 구하는데 사용하는 가격
-    :param period: 트라이엄프엑스(TRIX)를 구하는데 사용하는 기간
-    :param moving_average: 트라이엄프엑스(TRIX)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
+    :param price: (가격데이터) 트라이엄프엑스(TRIX)를 구하는데 사용하는 가격
+    :param period: (기간) 트라이엄프엑스(TRIX)를 구하는데 사용하는 기간
+    :param moving_average: (이동평균종류) 트라이엄프엑스(TRIX)를 구할 때 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
     if moving_average == MovingAverage.sma:
@@ -1040,10 +1040,10 @@ def trix_signal(price: Series, period: int, signal_period: int, moving_average: 
     예를 들어, 10일간 종가의 지수 이동 평균으로 트라이엄프엑스(TRIX)를 구하고 9일간 트라이엄프엑스(TRIX)의 지수 이동 평균을 구하고자 하는 경우에는
     'trix_signal(close, 10, 9, ema)' 또는 '소나시그널(종가, 10, 9, 지수이동평균)'과 같이 작성하면 됩니다.
 
-    :param price: 트라이엄프엑스(TRIX)를 구하는데 사용하는 가격
-    :param period: 트라이엄프엑스(TRIX)를 구하는데 사용하는 기간
-    :param signal_period: 트라이엄프엑스시그널(TRIX Signal)을 구하는데 사용하는 시그널 기간
-    :param moving_average: 트라이엄프엑스(TRIX)를 구하는데 사용하는 이동 평균 종류
+    :param price: (가격데이터) 트라이엄프엑스(TRIX)를 구하는데 사용하는 가격
+    :param period: (기간) 트라이엄프엑스(TRIX)를 구하는데 사용하는 기간
+    :param signal_period: (시그널기간) 트라이엄프엑스시그널(TRIX Signal)을 구하는데 사용하는 시그널 기간
+    :param moving_average: (이동평균종류) 트라이엄프엑스(TRIX)를 구하는데 사용하는 이동 평균 종류
     :return:
     """
     trix_val = trix(price, period, moving_average)
