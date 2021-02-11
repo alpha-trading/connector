@@ -23,7 +23,7 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name="utils",
-    version="3.9.0",
+    version="4.0.0",
     description="Alpha trading utils with pandas",
     python_requires="==3.*,>=3.7.0",
     project_urls={
@@ -35,7 +35,7 @@ setup(
     license="MIT",
     packages=["utils"],
     package_dir={"": "."},
-    package_data={},
+    package_data={"utils": ["*.csv", "merged_trend_data/*.csv", "trend_data/*.csv"]},
     install_requires=[
         "pandas==1.*,>=1.1.0",
         "pymysql==0.*,>=0.9.0",
