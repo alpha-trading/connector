@@ -100,7 +100,7 @@ def _bollinger_band(
         line_mid = ewma(price, period)
     elif moving_average == MovingAverage.wma:
         line_mid = wma(price, period)
-    line_std = ts_stddev(price, period)
+    line_std = price.rolling(window=period).std(ddof=0)
     bollinger_range = line_std.multiply(multiplier)
 
     return line_mid, bollinger_range
