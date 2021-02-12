@@ -228,6 +228,29 @@ def envelope_lower(price: Series, period: int, moving_average: MovingAverage, ra
     return line_mid - envelope_range
 
 
+def pivot_standard(price_high: Series, price_low: Series, price_close: Series) -> Series:
+    """
+    피봇기준선
+
+    <설명>
+    피봇기준선을 구하는 함수입니다.
+    피봇기준선은 전일 고가, 저가, 종가의 평균입니다.
+
+    <사용 방법>
+    첫 번째 인자에는 고가를,
+    두 번째 인자에는 저가를,
+    세 번째 인자에는 종가를 적으면 됩니다.
+    피봇기준선을 구하고자 하는 경우
+    'pivot_standard(high, low, close)' 또는 '피봇기준선(고가, 저가, 종가)'와 같이 작성하면 됩니다.
+
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param pre_close: (종가) 종가
+    :return:
+    """
+    return (price_high + price_low + price_close).shift(1) / 3
+
+
 def price_channel_upper(price_high: Series, period: int) -> Series:
     """
     가격채널상한선
