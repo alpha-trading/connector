@@ -337,6 +337,52 @@ def ts_kurt(value: Series, period: int) -> Series:
     return value.rolling(window=period, min_periods=period).kurt()
 
 
+def increase_from_lowest_price(price_low: Series, price_close: Series, period: int) -> Series:
+    """
+    최저가대비상승
+
+    <설명>
+    특정 기간(period)동안의 최저가 대비 당일 종가의 상승폭을 구하는 함수입니다.
+
+    <사용 방법>
+    첫 번째 인자는 저가를,
+    두 번째 인자는 종가를,
+    세 번째 인자는 최저가대비상승을 구하는데 사용하고자 하는 기간을 적으면 됩니다.
+    예를 들어, 최근 5일 동안의 최저가 대비 상승을 구하고자 하는 경우에는
+    'increase_from_lowest_price(low, close, 5) 또는 '최저가대비상승(저가, 종가, 5)'와 같이 작성하면 됩니다.
+
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :param period: (기간) 최저가대비상승(increase_from_lowest_price)을 구하는데 사용하고자 하는 기간
+    :return:
+    """
+    lowest_price = ts_min(price_low, period)
+    return price_close / lowest_price - 1
+
+
+def decrease_from_highest_price(price_high: Series, price_close: Series, period: int) -> Series:
+    """
+    최고가대비하락
+
+    <설명>
+    특정 기간(period)동안의 최고가 대비 당일 종가의 하락폭을 구하는 함수입니다.
+
+    <사용 방법>
+    첫 번째 인자는 고가를,
+    두 번째 인자는 종가를,
+    세 번째 인자는 최고가대비하락을 구하는데 사용하고자 하는 기간을 적으면 됩니다.
+    예를 들어, 최근 5일 동안의 최고가 대비 하락을 구하고자 하는 경우에는
+    'decrease_from_highest_price(high, close, 5) 또는 '최고가대비하락(고가, 종가, 5)'와 같이 작성하면 됩니다.
+
+    :param price_high: (저가) 고가
+    :param price_close: (종가) 종가
+    :param period: (기간) 최고가대비하락(decrease_from_highest_price)을 구하는데 사용하고자 하는 기간
+    :return:
+    """
+    highest_price = ts_max(price_high, period)
+    return price_close / highest_price - 1
+
+
 def ts_regression(value: Series, period: int) -> Series:
     return value.rolling(window=period, min_periods=period).apply(
         lambda x: _linear_regression(
