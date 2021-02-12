@@ -228,6 +228,125 @@ def envelope_lower(price: Series, period: int, moving_average: MovingAverage, ra
     return line_mid - envelope_range
 
 
+def pivot_standard(price_high: Series, price_low: Series, price_close: Series) -> Series:
+    """
+    피봇기준선
+
+    <설명>
+    피봇기준선을 구하는 함수입니다.
+    피봇기준선은 전일 고가, 저가, 종가의 평균입니다.
+
+    <사용 방법>
+    첫 번째 인자에는 고가를,
+    두 번째 인자에는 저가를,
+    세 번째 인자에는 종가를 적으면 됩니다.
+    피봇기준선을 구하고자 하는 경우
+    'pivot_standard(high, low, close)' 또는 '피봇기준선(고가, 저가, 종가)'와 같이 작성하면 됩니다.
+
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :return:
+    """
+    return (price_high + price_low + price_close).shift(1) / 3
+
+
+def pivot_second_upper(price_high: Series, price_low: Series, price_close: Series) -> Series:
+    """
+    피봇2차저항선
+
+    <설명>
+    피봇2차저항선을 구하는 함수입니다.
+    피봇2차저항선은 피봇 기준선에 전일 변동폭을 더한 값입니다.
+
+    <사용 방법>
+    첫 번째 인자에는 고가를,
+    두 번째 인자에는 저가를,
+    세 번째 인자에는 종가를 적으면 됩니다.
+    피봇2차저항선을 구하고자 하는 경우
+    'pivot_second_upper(high, low, close)' 또는 '피봇2차저항선(고가, 저가, 종가)'와 같이 작성하면 됩니다.
+
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :return:
+    """
+    pivot = pivot_standard(price_high, price_low, price_close)
+    return pivot + price_high.shift(1).sub(price_low.shift(1))
+
+
+def pivot_first_upper(price_high: Series, price_low: Series, price_close: Series) -> Series:
+    """
+    피봇1차저항선
+
+    <설명>
+    피봇1차저항선을 구하는 함수입니다.
+    피봇1차저항선은 피봇 기준선에 두배를 곱한 후 전일 저가를 뺀 값입니다.
+
+    <사용 방법>
+    첫 번째 인자에는 고가를,
+    두 번째 인자에는 저가를,
+    세 번째 인자에는 종가를 적으면 됩니다.
+    피봇1차저항선을 구하고자 하는 경우
+    'pivot_first_upper(high, low, close)' 또는 '피봇1차저항선(고가, 저가, 종가)'와 같이 작성하면 됩니다.
+
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :return:
+    """
+    pivot = pivot_standard(price_high, price_low, price_close)
+    return (pivot * 2).sub(price_low.shift(1))
+
+
+def pivot_first_lower(price_high: Series, price_low: Series, price_close: Series) -> Series:
+    """
+    피봇1차지지선
+
+    <설명>
+    피봇1차지지선을 구하는 함수입니다.
+    피봇1차지지선은 피봇 기준선에 두배를 곱한 후 전일 고가를 뺀 값입니다.
+
+    <사용 방법>
+    첫 번째 인자에는 고가를,
+    두 번째 인자에는 저가를,
+    세 번째 인자에는 종가를 적으면 됩니다.
+    피봇1차지지선을 구하고자 하는 경우
+    'pivot_first_lower(high, low, close)' 또는 '피봇1차지지선(고가, 저가, 종가)'와 같이 작성하면 됩니다.
+
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :return:
+    """
+    pivot = pivot_standard(price_high, price_low, price_close)
+    return (pivot * 2).sub(price_high.shift(1))
+
+
+def pivot_second_lower(price_high: Series, price_low: Series, price_close: Series) -> Series:
+    """
+    피봇2차지지선
+
+    <설명>
+    피봇2차지지선을 구하는 함수입니다.
+    피봇2차지지선은 피봇 기준선에 전일 변동폭을 뺀 값입니다.
+
+    <사용 방법>
+    첫 번째 인자에는 고가를,
+    두 번째 인자에는 저가를,
+    세 번째 인자에는 종가를 적으면 됩니다.
+    피봇2차지지선 구하고자 하는 경우
+    'pivot_second_lower(high, low, close)' 또는 '피봇2차지지선(고가, 저가, 종가)'와 같이 작성하면 됩니다.
+
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :return:
+    """
+    pivot = pivot_standard(price_high, price_low, price_close)
+    return pivot.sub(price_high.shift(1)) + price_low.shift(1)
+
+
 def price_channel_upper(price_high: Series, period: int) -> Series:
     """
     가격채널상한선
