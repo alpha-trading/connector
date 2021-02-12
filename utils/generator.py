@@ -81,6 +81,7 @@ class Generator:
         universe: Universe,
         table_name: str,
         trading_share: bool,
+        trading_indicator: bool,
         trading_trend: bool,
         start_date: date,
         end_date: date,
@@ -98,6 +99,13 @@ class Generator:
                     [data_day_price.ticker_id == data_share.ticker_id, data_day_price.date == data_share.date]
                 )
             )
+        if trading_indicator is True:
+            data_indicator = Table("data_keyindicator")
+            query = query.join(data_indicator).on(
+                Criterion.all(
+                    [data_day_price.ticker_id == data_indicator.ticker_id, data_day_price.date == data_indicator.date]
+                )
+            )
         if trading_trend is True:
             data_trend = Table("data_daytradingtrend")
             query = query.left_join(data_trend).on(
@@ -105,11 +113,9 @@ class Generator:
                     [data_day_price.ticker_id == data_trend.ticker_id, data_day_price.date == data_trend.date]
                 )
             )
-        if trading_share is False and trading_trend is False:
+        if trading_share is False and trading_indicator is False and trading_trend is False:
             query = query.select(data_day_price.star, data_ticker.ticker)
-        if trading_share is True and trading_trend is False:
-            query = query.select(data_day_price.star, data_ticker.ticker, data_share.cap, data_share.shares_out)
-        if trading_share is False and trading_trend is True:
+        if trading_share is False and trading_indicator is False and trading_trend is True:
             query = query.select(
                 data_day_price.star,
                 data_ticker.ticker,
@@ -122,12 +128,78 @@ class Generator:
                 data_trend.pension_f_buy_vol,
                 data_trend.pension_f_tr_val,
             )
-        if trading_share is True and trading_trend is True:
+        if trading_share is False and trading_indicator is True and trading_trend is False:
+            query = query.select(
+                data_day_price.star,
+                data_ticker.ticker,
+                data_indicator.eps,
+                data_indicator.per,
+                data_indicator.bps,
+                data_indicator.pbr,
+                data_indicator.dividend,
+                data_indicator.dividend_yield,
+            )
+        if trading_share is False and trading_indicator is True and trading_trend is True:
+            query = query.select(
+                data_day_price.star,
+                data_ticker.ticker,
+                data_indicator.eps,
+                data_indicator.per,
+                data_indicator.bps,
+                data_indicator.pbr,
+                data_indicator.dividend,
+                data_indicator.dividend_yield,
+                data_trend.p_buy_vol,
+                data_trend.p_buy_tr_val,
+                data_trend.o_buy_vol,
+                data_trend.o_buy_tr_val,
+                data_trend.f_buy_vol,
+                data_trend.f_buy_tr_val,
+                data_trend.pension_f_buy_vol,
+                data_trend.pension_f_tr_val,
+            )
+        if trading_share is True and trading_indicator is False and trading_trend is False:
+            query = query.select(data_day_price.star, data_ticker.ticker, data_share.cap, data_share.shares_out)
+        if trading_share is True and trading_indicator is False and trading_trend is True:
             query = query.select(
                 data_day_price.star,
                 data_ticker.ticker,
                 data_share.cap,
                 data_share.shares_out,
+                data_trend.p_buy_vol,
+                data_trend.p_buy_tr_val,
+                data_trend.o_buy_vol,
+                data_trend.o_buy_tr_val,
+                data_trend.f_buy_vol,
+                data_trend.f_buy_tr_val,
+                data_trend.pension_f_buy_vol,
+                data_trend.pension_f_tr_val,
+            )
+        if trading_share is True and trading_indicator is True and trading_trend is False:
+            query = query.select(
+                data_day_price.star,
+                data_ticker.ticker,
+                data_share.cap,
+                data_share.shares_out,
+                data_indicator.eps,
+                data_indicator.per,
+                data_indicator.bps,
+                data_indicator.pbr,
+                data_indicator.dividend,
+                data_indicator.dividend_yield,
+            )
+        if trading_share is True and trading_indicator is True and trading_trend is True:
+            query = query.select(
+                data_day_price.star,
+                data_ticker.ticker,
+                data_share.cap,
+                data_share.shares_out,
+                data_indicator.eps,
+                data_indicator.per,
+                data_indicator.bps,
+                data_indicator.pbr,
+                data_indicator.dividend,
+                data_indicator.dividend_yield,
                 data_trend.p_buy_vol,
                 data_trend.p_buy_tr_val,
                 data_trend.o_buy_vol,
@@ -151,20 +223,27 @@ class Generator:
         return df
 
     def get_day_price_data(
-        self, universe: Universe, trading_share: bool, trading_trend: bool, start_date: date, end_date: date
+        self,
+        universe: Universe,
+        trading_share: bool,
+        trading_indicator: bool,
+        trading_trend: bool,
+        start_date: date,
+        end_date: date,
     ) -> dict:
 
         """
         universe에 포함된 종목들의 무수정 주가 일봉 데이터 반환
         :param universe: kospi, kosdaq, kospi200, kosdaq150, top2000, top350(kospi200과 kosdaq150)
         :param trading_share: 상장주식수, 상장시가총액 데이터 포함여부
+        :param trading_indicator: per, pbr 데이터 포함여부
         :param trading_trend: 기간 순매수량, 외국인 순매수량 데이터 등 포함여부
         :param start_date:
         :param end_date:
         :return: 일봉 데이터
         """
         return self.__get_day_price_data(
-            universe, TABLE_RAW_CANDLE_DAY, trading_share, trading_trend, start_date, end_date
+            universe, TABLE_RAW_CANDLE_DAY, trading_share, trading_indicator, trading_trend, start_date, end_date
         )
 
     def get_edited_day_price_data(self, universe: Universe) -> dict:
@@ -176,7 +255,14 @@ class Generator:
         return self.__get_day_price_data(universe, TABLE_EDITED_CANDLE_DAY)
 
     def __get_day_price_data_by_ticker(
-        self, ticker, table_name, trading_share: bool, trading_trend: bool, start_date: date, end_date: date
+        self,
+        ticker,
+        table_name,
+        trading_share: bool,
+        trading_indicator: bool,
+        trading_trend: bool,
+        start_date: date,
+        end_date: date,
     ):
 
         data_day_price, data_ticker = Tables(table_name, "data_ticker")
@@ -189,6 +275,13 @@ class Generator:
                     [data_day_price.ticker_id == data_share.ticker_id, data_day_price.date == data_share.date]
                 )
             )
+        if trading_indicator is True:
+            data_indicator = Table("data_keyindicator")
+            query = query.join(data_indicator).on(
+                Criterion.all(
+                    [data_day_price.ticker_id == data_indicator.ticker_id, data_day_price.date == data_indicator.date]
+                )
+            )
         if trading_trend is True:
             data_trend = Table("data_daytradingtrend")
             query = query.left_join(data_trend).on(
@@ -196,13 +289,12 @@ class Generator:
                     [data_day_price.ticker_id == data_trend.ticker_id, data_day_price.date == data_trend.date]
                 )
             )
-        if trading_share is False and trading_trend is False:
+        if trading_share is False and trading_indicator is False and trading_trend is False:
             query = query.select(data_day_price.star, data_ticker.ticker)
-        if trading_share is True and trading_trend is False:
-            query = query.select(data_day_price.star, data_ticker.ticker, data_share.cap, data_share.shares_out)
-        if trading_share is False and trading_trend is True:
+        if trading_share is False and trading_indicator is False and trading_trend is True:
             query = query.select(
                 data_day_price.star,
+                data_ticker.ticker,
                 data_trend.p_buy_vol,
                 data_trend.p_buy_tr_val,
                 data_trend.o_buy_vol,
@@ -212,11 +304,78 @@ class Generator:
                 data_trend.pension_f_buy_vol,
                 data_trend.pension_f_tr_val,
             )
-        if trading_share is True and trading_trend is True:
+        if trading_share is False and trading_indicator is True and trading_trend is False:
             query = query.select(
                 data_day_price.star,
+                data_ticker.ticker,
+                data_indicator.eps,
+                data_indicator.per,
+                data_indicator.bps,
+                data_indicator.pbr,
+                data_indicator.dividend,
+                data_indicator.dividend_yield,
+            )
+        if trading_share is False and trading_indicator is True and trading_trend is True:
+            query = query.select(
+                data_day_price.star,
+                data_ticker.ticker,
+                data_indicator.eps,
+                data_indicator.per,
+                data_indicator.bps,
+                data_indicator.pbr,
+                data_indicator.dividend,
+                data_indicator.dividend_yield,
+                data_trend.p_buy_vol,
+                data_trend.p_buy_tr_val,
+                data_trend.o_buy_vol,
+                data_trend.o_buy_tr_val,
+                data_trend.f_buy_vol,
+                data_trend.f_buy_tr_val,
+                data_trend.pension_f_buy_vol,
+                data_trend.pension_f_tr_val,
+            )
+        if trading_share is True and trading_indicator is False and trading_trend is False:
+            query = query.select(data_day_price.star, data_ticker.ticker, data_share.cap, data_share.shares_out)
+        if trading_share is True and trading_indicator is False and trading_trend is True:
+            query = query.select(
+                data_day_price.star,
+                data_ticker.ticker,
                 data_share.cap,
                 data_share.shares_out,
+                data_trend.p_buy_vol,
+                data_trend.p_buy_tr_val,
+                data_trend.o_buy_vol,
+                data_trend.o_buy_tr_val,
+                data_trend.f_buy_vol,
+                data_trend.f_buy_tr_val,
+                data_trend.pension_f_buy_vol,
+                data_trend.pension_f_tr_val,
+            )
+        if trading_share is True and trading_indicator is True and trading_trend is False:
+            query = query.select(
+                data_day_price.star,
+                data_ticker.ticker,
+                data_share.cap,
+                data_share.shares_out,
+                data_indicator.eps,
+                data_indicator.per,
+                data_indicator.bps,
+                data_indicator.pbr,
+                data_indicator.dividend,
+                data_indicator.dividend_yield,
+            )
+        if trading_share is True and trading_indicator is True and trading_trend is True:
+            query = query.select(
+                data_day_price.star,
+                data_ticker.ticker,
+                data_share.cap,
+                data_share.shares_out,
+                data_indicator.eps,
+                data_indicator.per,
+                data_indicator.bps,
+                data_indicator.pbr,
+                data_indicator.dividend,
+                data_indicator.dividend_yield,
                 data_trend.p_buy_vol,
                 data_trend.p_buy_tr_val,
                 data_trend.o_buy_vol,
@@ -236,7 +395,13 @@ class Generator:
         return df
 
     def get_day_price_data_by_ticker(
-        self, ticker, trading_share: bool, trading_trend: bool, start_date: date, end_date: date
+        self,
+        ticker,
+        trading_share: bool,
+        trading_indicator: bool,
+        trading_trend: bool,
+        start_date: date,
+        end_date: date,
     ):
         """
         universe에 포함된 종목들의 수정 주가 일봉 데이터 반환
@@ -248,7 +413,7 @@ class Generator:
         :return: 해당 ticker의 일봉 데이터
         """
         return self.__get_day_price_data_by_ticker(
-            ticker, TABLE_RAW_CANDLE_DAY, trading_share, trading_trend, start_date, end_date
+            ticker, TABLE_RAW_CANDLE_DAY, trading_share, trading_indicator, trading_trend, start_date, end_date
         )
 
     def get_edited_day_price_data(self, ticker):
