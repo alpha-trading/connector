@@ -671,6 +671,80 @@ def macd_oscillator(
     return macd_val - signal
 
 
+def stochastic_fast_k(price_high: Series, price_low: Series, price_close: Series, k_period: int) -> Series:
+    """
+    스토캐스틱
+
+    <설명>
+    스토캐스틱(stochastic_fast_k)을 구하는 함수입니다.
+    정해진 기간동안(k_period)의 가격 범위에서 오늘의 시장가격이 상대적으로 어디에 위치하고 있는지를 알려주는 지표로써,
+    시장가격이 상승추세에 있다면 현재가격은 최고가 부근에 위치할 가능성이 높고,
+    하락추세에 있다면 현재가는 최저가 부근에서 형성될 가능성이 높다는 것에 착안하여 만들어진 지표입니다.
+
+    <사용방법>
+    첫 번째 인자에는 고가를,
+    두 번째 인자에는 저가를,
+    세 번째 인자에는 종가를,
+    네 번째 인자에는 스토캐스틱(stochastic_fast_k)을 구하는데 사용할 기간을 적으면 됩니다.
+    예를 들어, 20일간의 스토캐스틱(stochastic_fast_k)을 구하고자 하는 경우에는
+    'stochastic_fast_k(high, low, close, 20)' 또는 '스토캐스틱(고가, 저가, 종가, 20)'과 같이 작성하면 됩니다.
+
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :param k_period: (스토캐스틱기간) 스토캐스틱(stochastic_fast_k)을 구하는데 사용할 기간
+    :return:
+    """
+    return (price_close - price_low.rolling(window=k_period).min()) / (
+        price_high.rolling(window=k_period).max() - price_low.rolling(window=k_period).min()
+    )
+
+
+def stochastic_fast_d(
+    price_high: Series,
+    price_low: Series,
+    price_close: Series,
+    k_period: int,
+    d_period: int,
+    moving_average: MovingAverage,
+) -> Series:
+    """
+    스토캐스틱이동평균
+
+    <설명>
+    스토캐스틱이동평균(stochastic_fast_d)을 구하는 함수입니다.
+    스토캐스틱이동평균은 스토캐스틱을 정해진 기간(d_period)동안 평균을 낸 값입니다.
+
+    <사용방법>
+    첫 번째 인자에는 고가를,
+    두 번째 인자에는 저가를,
+    세 번째 인자에는 종가를,
+    네 번째 인자에는 스토캐스틱(stochastic_fast_k)을 구하는데 사용할 기간을,
+    다섯 번째 인자에는 스토캐스틱이동평균(stochastic_fast_d)을 구하는데 사용한 기간을,
+    여섯 번째 인자에는 스토캐스틱이동평균(stochastic_fast_d)을 구하는데 사용하는 이동 평균 종류를 적으면 됩니다.
+    예를 들어, 20일간의 스토캐스틱(stochastic_fast_k)을 구하고 이를 5일간 단순 이동평균을 낸 값을 사용하고자 하는 경우에는
+    'stochastic_fast_d(high, low, close, 20, 5, sma)' 또는 '스토캐스틱이동평균(고가, 저가, 종가, 20, 5, 단순이동평균)'과 같이 작성하면 됩니다.
+
+    :param price_high: (고가) 고가
+    :param price_low: (저가) 저가
+    :param price_close: (종가) 종가
+    :param k_period: (스토캐스틱기간) 스토캐스틱(stochastic_fast_k)을 구하는데 사용할 기간
+    :param d_period: (이동평균기간) 스토캐스틱이동평균(stochastic_fast_d)을 구하는데 사용할 기간
+    :param moving_average (이동평균종류) 스토캐스틱이동평균(stochastic_fast_d)을 구하는데 사용할 이동평균 종류
+    :return:
+    """
+    stochastic_fast_k_val = stochastic_fast_k(price_high, price_low, price_close, k_period)
+
+    if moving_average == MovingAverage.sma:
+        return sma(stochastic_fast_k_val, d_period)
+    elif moving_average == MovingAverage.ema:
+        return ema(stochastic_fast_k_val, d_period)
+    elif moving_average == MovingAverage.ewma:
+        return ewma(stochastic_fast_k_val, d_period)
+    elif moving_average == MovingAverage.wma:
+        return wma(stochastic_fast_k_val, d_period)
+
+
 def volume_ratio(price: Series, volume: Series, period: int) -> Series:
     """
     거래량비율
