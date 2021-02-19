@@ -12,6 +12,52 @@ def _linear_regression(x, y):
     return coef
 
 
+def compare_max(*args) -> Series:
+    """
+    최댓값
+
+    <설명>
+    입력한 인자들 가운데 가장 큰 값을 반환하는 함수입니다.
+
+    <사용 방법>
+    비교할 값들을 인자로 적으면 됩니다.
+    예를 들어, 시가와 종가 중 큰 값만을 사용하고자 하는 경우에는
+    'max(open, close)' 또는 '최댓값(시가, 종가)'와 같이 작성하면 됩니다.
+
+    :param args:
+    :return:
+    """
+    series_list = []
+    for obj in args:
+        series_list.append(obj)
+
+    merged_data = DataFrame(series_list)
+    return merged_data.max(axis=0)
+
+
+def compare_min(*args) -> Series:
+    """
+    최솟값
+
+    <설명>
+    입력한 인자들 가운데 가장 작은 값을 반환하는 함수입니다.
+
+    <사용 방법>
+    비교할 값들을 인자로 적으면 됩니다.
+    예를 들어, 시가와 종가 중 작은 값만을 사용하고자 하는 경우에는
+    'min(open, close)' 또는 '최솟값(시가, 종가)'와 같이 작성하면 됩니다.
+
+    :param args:
+    :return:
+    """
+    series_list = []
+    for obj in args:
+        series_list.append(obj)
+
+    merged_data = DataFrame(series_list)
+    return merged_data.min(axis=0)
+
+
 def rank(value: Series) -> Series:
     """
     순위
