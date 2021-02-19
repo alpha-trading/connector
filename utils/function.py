@@ -12,7 +12,7 @@ def _linear_regression(x, y):
     return coef
 
 
-def compare_max(*args) -> Series:
+def s_max(*args) -> Series:
     """
     최댓값
 
@@ -22,7 +22,7 @@ def compare_max(*args) -> Series:
     <사용 방법>
     비교할 값들을 인자로 적으면 됩니다.
     예를 들어, 시가와 종가 중 큰 값만을 사용하고자 하는 경우에는
-    'max(open, close)' 또는 '최댓값(시가, 종가)'와 같이 작성하면 됩니다.
+    's_max(open, close)' 또는 '최댓값(시가, 종가)'와 같이 작성하면 됩니다.
 
     :param args:
     :return:
@@ -35,7 +35,7 @@ def compare_max(*args) -> Series:
     return merged_data.max(axis=0)
 
 
-def compare_min(*args) -> Series:
+def s_min(*args) -> Series:
     """
     최솟값
 
@@ -45,7 +45,7 @@ def compare_min(*args) -> Series:
     <사용 방법>
     비교할 값들을 인자로 적으면 됩니다.
     예를 들어, 시가와 종가 중 작은 값만을 사용하고자 하는 경우에는
-    'min(open, close)' 또는 '최솟값(시가, 종가)'와 같이 작성하면 됩니다.
+    's_min(open, close)' 또는 '최솟값(시가, 종가)'와 같이 작성하면 됩니다.
 
     :param args:
     :return:
