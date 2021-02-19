@@ -234,6 +234,63 @@ def sigmoid(value: Series) -> Series:
     return 1 / (1 + np.exp(-value))
 
 
+def sine(value: Series) -> Series:
+    """
+    사인
+
+    <설명>
+    입력된 값을 radian 단위로 취급하여 사인 값을 구하는 함수입니다.
+    사인(sine)을 사용하면 값들을 -1과 1사이로 정규화시킬 수 있습니다.
+
+    <사용 방법>
+    첫 번째 인자에 사인 값으로 반환할 대상을 적으면 됩니다.
+    예를 들어, 20일 종가의 변화율을 사인 값으로 변환하고자 하는 경우에는
+    'sine(pct_change(close, 20))' 또는 '사인(변화율(종가, 20))'과 같이 작성하면 됩니다.
+
+    :param value: (데이터) 사인 값으로 변환하고자 하는 값
+    :return:
+    """
+    return np.sin(value)
+
+
+def cosine(value: Series) -> Series:
+    """
+    코사인
+
+    <설명>
+    입력된 값을 radian 단위로 취급하여 코사인 값을 구하는 함수입니다.
+    코사인(cosine)을 사용하면 값들을 -1과 1사이로 정규화시킬 수 있습니다.
+
+    <사용 방법>
+    첫 번째 인자에 코사인 값으로 반환할 대상을 적으면 됩니다.
+    예를 들어, 20일 종가의 변화율을 코사인 값으로 변환하고자 하는 경우에는
+    'cosine(pct_change(close, 20))' 또는 '코사인(변화율(종가, 20))'과 같이 작성하면 됩니다.
+
+    :param value: (데이터) 코사인 값으로 변환하고자 하는 값
+    :return:
+    """
+    return np.cos(value)
+
+
+def tangent(value: Series) -> Series:
+    """
+    탄젠트
+
+    <설명>
+    입력된 값을 radian 단위로 취급하여 탄젠트 값을 구하는 함수입니다.
+    탄젠트(tangent)을 사용하면 값들을 -1과 1사이로 정규화시킬 수 있습니다.
+
+    <사용 방법>
+    첫 번째 인자에 탄젠트 값으로 반환할 대상을 적으면 됩니다.
+    예를 들어, 20일 종가의 변화율을 탄젠트 값으로 변환하고자 하는 경우에는
+    'tangent(pct_change(close, 20))' 또는 '탄젠트(변화율(종가, 20))'과 같이 작성하면 됩니다.
+
+    :param value: (데이터) 탄젠트 값으로 변환하고자 하는 값
+    :return:
+    """
+    return np.tan(value)
+
+
 def tanh(value: Series) -> Series:
     """
     하이퍼블릭탄젠트
