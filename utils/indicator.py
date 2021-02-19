@@ -539,8 +539,8 @@ def adx(
     :return:
     """
 
-    pdi_val = pdi(price_high, price_low, price_close, period)
-    mdi_val = mdi(price_high, price_low, price_close, period)
+    pdi_val = pdi(price_high, price_low, price_close, period, moving_average)
+    mdi_val = mdi(price_high, price_low, price_close, period, moving_average)
     dx = abs(pdi_val - mdi_val).divide(pdi_val + mdi_val)
 
     if moving_average == MovingAverage.sma:
