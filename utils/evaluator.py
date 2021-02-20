@@ -2,7 +2,6 @@ from typing import Tuple
 
 from datetime import date, timedelta
 from pandas import DataFrame, Series
-import pandas as pd
 
 from utils.executor import Executor
 from utils.generator import Generator

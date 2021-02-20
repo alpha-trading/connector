@@ -21,6 +21,7 @@ python-telegram-bot = "^12.8"
 pypika = "^0.47.0"
 [tool.poetry.dev-dependencies]
 dephell = "^0.8.3"
+docstring-parser = "^0.7.3"
 
 [tool.black]
 line-length = 119
