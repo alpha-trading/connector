@@ -4,13 +4,13 @@ from datetime import date, timedelta
 from pandas import DataFrame, Series
 
 from utils.executor import Executor
-from utils.generator import Generator
+from utils.reader import Reader
 from utils.parameter import Universe, UnitPeriod
 
 
 class Evaluator:
     def __init__(self, executor: Executor):
-        self.generator = Generator(executor)
+        self.reader = Reader(executor)
 
     @staticmethod
     def get_pnl(balance: Series) -> Series:
@@ -40,7 +40,7 @@ class Evaluator:
         :param end_date: 끝 날짜
         :return: 비교 지수의 일봉
         """
-        index_day_price = self.generator.get_index_day_price_data(universe, start_date, end_date)
+        index_day_price = self.reader.get_index_day_price_data(universe, start_date, end_date)
         return index_day_price
 
     @staticmethod

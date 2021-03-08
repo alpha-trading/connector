@@ -9,9 +9,10 @@ from utils.parameter import Table as PhysicalTable
 from utils.parameter import Field as PhysicalField
 
 
-class Generator:
+class Reader:
     def __init__(self, executor: Executor):
         self.executor = executor
+        self.executor.set_read_mode(True)
 
     def get_trading_day_list(self, start_date: datetime.datetime.date, end_date: datetime.datetime.date) -> list:
         """
@@ -356,3 +357,10 @@ class Generator:
         df = self.executor.sql(query.get_sql())
         df = df.drop(["id", "ticker"], axis=1)
         return df
+
+
+if __name__ == '__main__':
+    executor = Executor("")
+    reader = Reader(executor)
+    result = reader.get_simulating_data(Universe.total, [PhysicalField.open, PhysicalField.close], datetime.date(2001, 1, 1), datetime.date(2001, 12, 31))
+    print(result)
