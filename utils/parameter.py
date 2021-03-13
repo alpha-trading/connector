@@ -51,6 +51,7 @@ class Table(Enum):
 
 
 class Field(Enum):
+    ticker_id = ("ticker_id", Table.candle_day)
     open = ("open", Table.candle_day)
     low = ("low", Table.candle_day)
     high = ("high", Table.candle_day)
@@ -75,4 +76,4 @@ class Field(Enum):
         self.table = table
 
     def get_full_name(self):
-        return f'{self.table.name}.{self.column_name}'
+        return f"{self.table.name}.{self.column_name}"
