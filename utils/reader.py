@@ -106,7 +106,7 @@ class Reader:
         """
         data_ticker = Table(PhysicalTable.ticker.value)
 
-        query = MySQLQuery.from_(data_ticker).select("ticker_id").distinct()
+        query = MySQLQuery.from_(data_ticker).select("ticker").distinct()
         if universe != Universe.total:
             query = query.where(data_ticker.universe == universe)
         df = self.executor.sql(query.get_sql())
