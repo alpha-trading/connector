@@ -27,6 +27,13 @@ class Executor:
 
         self.connector = pymysql.connect(**parse(database_url))
 
+    def set_read_mode(self, is_read_mode: bool):
+        cursor = self.connector.cursor()
+        if is_read_mode:
+            cursor.execute("SET SESSION TRANSACTION ISOLATION LEVEL READ COMMITTED")
+        else:
+            cursor.execute("SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+
     def sql(self, sql: str) -> pd.DataFrame:
         return pd.read_sql(sql, self.connector)
 
