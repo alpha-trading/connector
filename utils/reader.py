@@ -49,7 +49,7 @@ class Reader:
         append_ticker_id_column=True,
     ):
         if field_list is None:
-            field_list = PhysicalField.__members__
+            field_list = [PhysicalField.__members__[x] for x in list(PhysicalField.__members__)]
 
         ticker_history_table = Table(PhysicalTable.ticker_history.value)
         candle_table = Table(PhysicalTable.candle_day.value)
@@ -72,7 +72,7 @@ class Reader:
 
         # trading_trend 를 요구
         if any([x.table == PhysicalTable.day_trading_trend for x in field_list]):
-            query = query.join(trading_trend_table).using("date", "ticker_id")
+            query = query.left_join(trading_trend_table).using("date", "ticker_id")
 
         # trading_info 를 요구
         if any([x.table == PhysicalTable.day_trading_info for x in field_list]):
