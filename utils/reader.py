@@ -357,10 +357,3 @@ class Reader:
         df = self.executor.sql(query.get_sql())
         df = df.drop(["id", "ticker"], axis=1)
         return df
-
-
-if __name__ == '__main__':
-    executor = Executor("")
-    reader = Reader(executor)
-    result = reader.get_simulating_data(Universe.total, [PhysicalField.open, PhysicalField.close], datetime.date(2001, 1, 1), datetime.date(2001, 12, 31))
-    print(result)
