@@ -70,6 +70,7 @@ class Field(Enum):
     etc_buy_vol = ("etc_buy_vol", Table.day_trading_trend)
     cap = ("cap", Table.day_trading_info)
     shares_out = ("shares_out", Table.day_trading_info)
+    is_active = ("is_active", Table.ticker_history)
 
     def __init__(self, column_name: str, table: Table):
         self.column_name = column_name

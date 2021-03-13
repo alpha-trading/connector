@@ -48,6 +48,9 @@ class Reader:
         end_date: datetime.date,
         append_ticker_id_column=True,
     ):
+        if field_list is None:
+            pass
+
         ticker_history_table = Table(PhysicalTable.ticker_history.value)
         candle_table = Table(PhysicalTable.candle_day.value)
         trading_trend_table = Table(PhysicalTable.day_trading_trend.value)
@@ -57,15 +60,7 @@ class Reader:
         query = (
             MySQLQuery.from_(ticker_history_table)
             .select("date")
-            .where(
-                Criterion.all(
-                    [
-                        ticker_history_table.date >= start_date,
-                        ticker_history_table.date <= end_date,
-                        ticker_history_table.is_active,
-                    ]
-                )
-            )
+            .where(Criterion.all([ticker_history_table.date >= start_date, ticker_history_table.date <= end_date]))
         )
 
         if universe != Universe.total:
