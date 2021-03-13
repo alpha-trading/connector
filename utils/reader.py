@@ -49,7 +49,7 @@ class Reader:
         append_ticker_id_column=True,
     ):
         if field_list is None:
-            pass
+            field_list = PhysicalField.__members__
 
         ticker_history_table = Table(PhysicalTable.ticker_history.value)
         candle_table = Table(PhysicalTable.candle_day.value)
