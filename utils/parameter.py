@@ -52,6 +52,7 @@ class Table(Enum):
 
 class Field(Enum):
     open = ("open", Table.candle_day)
+    low = ("low", Table.candle_day)
     high = ("high", Table.candle_day)
     close = ("close", Table.candle_day)
     vol = ("vol", Table.candle_day)
