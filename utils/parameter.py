@@ -39,6 +39,11 @@ class UnitPeriod(Enum):
     year = 2
 
 
+class Order(Enum):
+    ascending = 1
+    descending = 2
+
+
 class Table(Enum):
     candle_day = "data_candleday"
     ticker = "data_ticker"
@@ -74,4 +79,4 @@ class Field(Enum):
         self.table = table
 
     def get_full_name(self):
-        return f'{self.table.name}.{self.column_name}'
+        return f"{self.table.name}.{self.column_name}"

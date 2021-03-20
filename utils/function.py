@@ -2,7 +2,7 @@ from pandas import Series, DataFrame, merge
 import numpy as np
 from sklearn.linear_model import LinearRegression
 
-from utils.parameter import KindOfAverage
+from utils.parameter import KindOfAverage, Order
 
 
 def _linear_regression(x, y):
@@ -58,23 +58,52 @@ def s_min(*args) -> Series:
     return merged_data.min(axis=0)
 
 
-def rank(value: Series) -> Series:
+def rank(value: Series, ordering: Order) -> Series:
     """
     순위
+
+    <설명>
+    당일 코스피, 코스닥 구성 종목에서 해당 종목의 순위를 반환하는 함수입니다.
+    1부터 전체 종목 개수의 값을 가지며, 오름차순의 경우 1에 가까울수록 순위가 낮다는 의미입니다.
+
+    <사용 방법>
+    첫 번째 인자에 순위를 구하고자 하는 값을,
+    두 번째 인자에는 순위를 구할 때 순서를 적으면 됩니다.
+    예를 들어, 20일 평균 거래대금의 오름차순 순위를 구하고자 하는 경우에는
+    'rank(sma(tr_val, 20), ascending)' 또는 '순위(단순이동평균(거래대금, 20), 오름차순)'과 같이 작성하면 됩니다.
+
+    :param value: (데이터) 순위를 구하고자 하는 값
+    :param ordering: (순서) 오름차순 또는 내림차순
+    :return:
+    """
+    if ordering == Order.ascending:
+        return value.rank()
+    else:
+        return value.rank(ascending=False)
+
+
+def ratio_rank(value: Series, ordering: Order) -> Series:
+    """
+    비율순위
 
     <설명>
     당일 코스피, 코스닥 구성 종목에서 해당 종목의 순위를 반환하는 함수입니다.
     0과 1사이의 값을 가지며, 1에 가까울수록 순위가 높다는 의미입니다.
 
     <사용 방법>
-    첫 번째 인자에 순위를 구하고자 하는 값을 적으면 됩니다.
-    예를 들어, 20일 평균 거래대금의 순위를 구하고자 하는 경우에는
-    'rank(sma(tr_val, 20))' 또는 '순위(단순이동평균(거래대금, 20))'과 같이 작성하면 됩니다.
+    첫 번째 인자에 순위를 구하고자 하는 값을,
+    두 번째 인자에는 순위를 구할 때 순서를 적으면 됩니다.
+    예를 들어, 20일 평균 거래대금의 오름차순 순위를 구하고자 하는 경우에는
+    'ratio_rank(sma(tr_val, 20), ascending)' 또는 '비율순위(단순이동평균(거래대금, 20), 오름차순)'과 같이 작성하면 됩니다.
 
-    :param value: (데이터) 순위를 구하고자 하는 값
+    :param value: (데이터) 비율 순위를 구하고자 하는 값
+    :param ordering: (순서) 오름차순 또는 내림차순
     :return:
     """
-    return value.rank(pct=True)
+    if ordering == Order.ascending:
+        return value.rank(pct=True)
+    else:
+        return value.rank(ascending=False, pct=True)
 
 
 def ts_sum(value: Series, period: int) -> Series:
