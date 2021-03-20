@@ -173,7 +173,7 @@ class Reader:
         query = query.where(
             Criterion.all(
                 [
-                    data_ticker.ticker.isin(past_universe_stock_list),
+                    # data_ticker.ticker.isin(past_universe_stock_list),
                     data_day_price.date >= start_date,
                     data_day_price.date <= end_date,
                 ]

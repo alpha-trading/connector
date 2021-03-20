@@ -2,6 +2,7 @@
 from typing import Tuple
 from pandas import DataFrame, Series
 import numpy as np
+import pandas as pd
 
 from utils.function import ts_stddev
 from utils.parameter import MovingAverage
@@ -428,8 +429,8 @@ def pdi(
     :param moving_average: (이동평균종류) 매수방향지표(PDI)를 구하는데 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
-    pdm = np.where(
-        ((price_high.diff(1) > 0) & (price_high.diff(1) > price_low.shift(1) - price_low)), price_high.diff(1), 0
+    pdm = price_high.diff(1).where(
+        ((price_high.diff(1) > 0) & (price_high.diff(1) > price_low.shift(1) - price_low)), 0
     )
 
     if moving_average == MovingAverage.sma:
@@ -441,18 +442,19 @@ def pdi(
     elif moving_average == MovingAverage.wma:
         pdmn = wma(Series(pdm), period)
 
-    tr = _tr(price_high, price_low, price_close)
-
-    if moving_average == MovingAverage.sma:
-        trn = sma(tr, period)
-    elif moving_average == MovingAverage.ema:
-        trn = ema(tr, period)
-    elif moving_average == MovingAverage.ewma:
-        trn = ewma(tr, period)
-    elif moving_average == MovingAverage.wma:
-        trn = wma(tr, period)
-
-    return pdmn.divide(trn)
+    return pdmn
+    # tr = _tr(price_high, price_low, price_close)
+    #
+    # if moving_average == MovingAverage.sma:
+    #     trn = sma(tr, period)
+    # elif moving_average == MovingAverage.ema:
+    #     trn = ema(tr, period)
+    # elif moving_average == MovingAverage.ewma:
+    #     trn = ewma(tr, period)
+    # elif moving_average == MovingAverage.wma:
+    #     trn = wma(tr, period)
+    #
+    # return pdmn.divide(trn)
 
 
 def mdi(
@@ -482,10 +484,8 @@ def mdi(
     :param moving_average: (이동평균종류) 매도방향지표(MDI)를 구하는데 사용하는 이동 평균 종류 ex) 단순 이동평균, 지수 이동평균, 가중 이동평균
     :return:
     """
-    mdm = np.where(
-        (((price_low.shift(1) - price_low) > 0) & (price_high.diff(1) < (price_low.shift(1) - price_low))),
-        price_low.shift(1) - price_low,
-        0,
+    mdm = (price_low.shift(1) - price_low).where(
+        (((price_low.shift(1) - price_low) > 0) & (price_high.diff(1) < (price_low.shift(1) - price_low))), 0
     )
 
     if moving_average == MovingAverage.sma:
@@ -766,9 +766,9 @@ def volume_ratio(price: Series, volume: Series, period: int) -> Series:
     :param period: (기간) 거래량비율(Volume Ratio)을 구하는데 사용하는 기간
     :return:
     """
-    up = np.where(price.diff(1).gt(0), volume, 0)
-    down = np.where(price.diff(1).lt(0), volume, 0)
-    maintain = np.where(price.diff(1).equals(0), volume.mul(0.5), 0)
+    up = volume.where(price.diff(1).gt(0), 0)
+    down = volume.where(price.diff(1).lt(0), 0)
+    maintain = (volume.mul(0.5)).where(price.diff(1).equals(0), 0)
 
     up = up + maintain
     down = down + maintain
@@ -800,7 +800,7 @@ def psychological_line(price: Series, period: int) -> Series:
     :param period: (기간) 투자심리도(Psychological Line)를 구하는데 사용하는 기간
     :return:
     """
-    up = np.where(price.diff(1).gt(0), 1, 0)
+    up = price.diff(1).gt(0).astype(int)
     sum_up = Series(up).rolling(window=period, min_periods=period).sum()
 
     return sum_up.divide(period)
@@ -824,14 +824,14 @@ def new_psychological_line(price: Series, period: int) -> Series:
     :param period: (기간) 신심리도(New Psychological Line)를 구하는데 사용하는 기간
     :return:
     """
-    up_cnt = np.where(price.diff(1).gt(0), 1, 0)
+    up_cnt = price.diff(1).gt(0).astype(int)
     up_cnt_cum = Series(up_cnt).rolling(window=period, min_periods=period).sum()
-    up_width = np.where(price.diff(1).gt(0), price.diff(1), 0)
+    up_width = price.diff(1).where(price.diff(1).gt(0), 0)
     up_width_cum = Series(up_width).rolling(window=period, min_periods=period).sum()
 
-    down_cnt = np.where(price.diff(1).lt(0), 1, 0)
+    down_cnt = price.diff(1).lt(0).astype(int)
     down_cnt_cum = Series(down_cnt).rolling(window=period, min_periods=period).sum()
-    down_width = np.where(price.diff(1).lt(1), abs(price.diff(1)), 0)
+    down_width = abs(price.diff(1)).where(price.diff(1).lt(1), 0)
     down_width_cum = Series(down_width).rolling(window=period, min_periods=period).sum()
 
     up = up_cnt_cum.multiply(up_width_cum)
@@ -916,7 +916,7 @@ def upper_tail_ratio(price_open: Series, price_high: Series, price_close: Series
     :param price_close: (종가) 종가
     :return:
     """
-    price_upper = np.where(price_open >= price_open, price_open, price_close)
+    price_upper = price_open.where(price_open >= price_open, price_close)
     price_upper = Series(price_upper)
 
     return (price_high - price_upper) / (price_close - price_open).abs()
@@ -941,7 +941,7 @@ def lower_tail_ratio(price_open: Series, price_low: Series, price_close: Series)
     :param price_close: (종가) 종가
     :return:
     """
-    price_under = np.where(price_open >= price_open, price_close, price_open)
+    price_under = price_close.where(price_open >= price_open, price_open)
     price_under = Series(price_under)
 
     return (price_under - price_low) / (price_close - price_open).abs()
@@ -1176,9 +1176,9 @@ def mfi(price_high: Series, price_low: Series, price_close: Series, vol: Series,
     typical_price = (price_high + price_low + price_close) / 3
     money_flow = vol * typical_price
 
-    positive_money_flow = np.where(typical_price.diff(1) > 0, money_flow, 0)
+    positive_money_flow = money_flow.where(typical_price.diff(1) > 0, 0)
     positive_money_flow = Series(positive_money_flow).rolling(window=period, min_periods=period).sum()
-    negative_money_flow = np.where(typical_price.diff(1) < 0, money_flow, 0)
+    negative_money_flow = money_flow.where(typical_price.diff(1) < 0, 0)
     negative_money_flow = Series(negative_money_flow).rolling(window=period, min_periods=period).sum()
 
     money_flow_ratio = positive_money_flow / negative_money_flow
