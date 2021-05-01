@@ -87,7 +87,9 @@ class Reader:
             )
 
         if require_field_list is not None and len(require_field_list) > 0:
-            field_list.extend(require_field_list)
+            for require_field in require_field_list:
+                if require_field not in field_list:
+                    field_list.append(require_field)
 
         query = query.select(*[Field(x.column_name, table=Table(x.table.value)) for x in field_list])
         df = self.executor.sql(query.get_sql())
