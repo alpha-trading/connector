@@ -23,7 +23,7 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name="utils",
-    version="5.2.1",
+    version="5.2.2",
     description="Alpha trading utils with pandas",
     python_requires="==3.*,>=3.7.9",
     project_urls={
