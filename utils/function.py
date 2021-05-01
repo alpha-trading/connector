@@ -1,15 +1,7 @@
 from pandas import Series, DataFrame, merge
 import numpy as np
-from sklearn.linear_model import LinearRegression
 
 from utils.parameter import KindOfAverage, Order
-
-
-def _linear_regression(x, y):
-    linear = LinearRegression()
-    model = linear.fit(x, y)
-    coef = model.coef_
-    return coef
 
 
 def s_max(*args) -> Series:
@@ -513,15 +505,6 @@ def decrease_from_highest_price(price_high: Series, price_close: Series, period:
     """
     highest_price = ts_max(price_high, period)
     return price_close / highest_price - 1
-
-
-def ts_regression(value: Series, period: int) -> Series:
-    return value.rolling(window=period, min_periods=period).apply(
-        lambda x: _linear_regression(
-            [[x_val] for x_val in np.arange(1, period + 1)],
-            [[(y_val - Series(x).values[0]) / Series(x).values[0] * 100] for y_val in Series(x).values],
-        )
-    )
 
 
 def get_ts_correlation(lhs_value: DataFrame, rhs_value: DataFrame, window_size: int):
