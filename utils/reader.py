@@ -46,7 +46,7 @@ class Reader:
         field_list: list,
         start_date: datetime.date,
         end_date: datetime.date,
-        append_ticker_id_column=True,
+        require_field_list,
     ):
         if field_list is None:
             field_list = [PhysicalField.__members__[x] for x in list(PhysicalField.__members__)]
@@ -86,8 +86,8 @@ class Reader:
                 )
             )
 
-        if append_ticker_id_column and PhysicalField.ticker_id not in field_list:
-            field_list.append(PhysicalField.ticker_id)
+        if require_field_list is not None and len(require_field_list) > 0:
+            field_list.extend(require_field_list)
 
         query = query.select(*[Field(x.column_name, table=Table(x.table.value)) for x in field_list])
         df = self.executor.sql(query.get_sql())
