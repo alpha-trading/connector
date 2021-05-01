@@ -40,37 +40,43 @@ class Reader:
         trading_day_list = df["date"].to_list()
         return trading_day_list
 
-    def get_simulating_data(self, universe: Universe, field_list: list, start_date: datetime.date, end_date: datetime.date):
+    def get_simulating_data(
+        self,
+        universe: Universe,
+        field_list: list,
+        start_date: datetime.date,
+        end_date: datetime.date,
+        append_ticker_id_column=True,
+    ):
+        if field_list is None:
+            field_list = [PhysicalField.__members__[x] for x in list(PhysicalField.__members__)]
+
         ticker_history_table = Table(PhysicalTable.ticker_history.value)
         candle_table = Table(PhysicalTable.candle_day.value)
         trading_trend_table = Table(PhysicalTable.day_trading_trend.value)
         trading_info_table = Table(PhysicalTable.day_trading_info.value)
         exchange_rate_table = Table(PhysicalTable.exchange_rate_candle_day.value)
 
-        query = MySQLQuery.from_(ticker_history_table).select('date').where(
-            Criterion.all(
-                [ticker_history_table.date >= start_date, ticker_history_table.date <= end_date, ticker_history_table.is_active]
-            )
+        query = (
+            MySQLQuery.from_(ticker_history_table)
+            .select("date")
+            .where(Criterion.all([ticker_history_table.date >= start_date, ticker_history_table.date <= end_date]))
         )
 
         if universe != Universe.total:
-            query = query.where(
-                Criterion.all(
-                    [ticker_history_table.universe == universe]
-                )
-            )
+            query = query.where(Criterion.all([ticker_history_table.universe == universe]))
 
         # candle_day 를 요구
         if any([x.table == PhysicalTable.candle_day for x in field_list]):
-            query = query.join(candle_table).using('date', 'ticker_id')
+            query = query.join(candle_table).using("date", "ticker_id")
 
         # trading_trend 를 요구
         if any([x.table == PhysicalTable.day_trading_trend for x in field_list]):
-            query = query.join(trading_trend_table).using('date', 'ticker_id')
+            query = query.left_join(trading_trend_table).using("date", "ticker_id")
 
         # trading_info 를 요구
         if any([x.table == PhysicalTable.day_trading_info for x in field_list]):
-            query = query.join(trading_info_table).using('date', 'ticker_id')
+            query = query.join(trading_info_table).using("date", "ticker_id")
 
         # 환율 정보
         for column in ExchangeRate:
@@ -79,6 +85,9 @@ class Reader:
                     [exchange_rate_table.date == ticker_history_table.date, exchange_rate_table.ticker == column]
                 )
             )
+
+        if append_ticker_id_column and PhysicalField.ticker_id not in field_list:
+            field_list.append(PhysicalField.ticker_id)
 
         query = query.select(*[Field(x.column_name, table=Table(x.table.value)) for x in field_list])
         df = self.executor.sql(query.get_sql())
@@ -92,7 +101,7 @@ class Reader:
         """
         data_ticker = Table(PhysicalTable.ticker.value)
 
-        query = MySQLQuery.from_(data_ticker).select("ticker_id").distinct()
+        query = MySQLQuery.from_(data_ticker).select("ticker").distinct()
         if universe != Universe.total:
             query = query.where(data_ticker.universe == universe)
         df = self.executor.sql(query.get_sql())
@@ -164,7 +173,7 @@ class Reader:
         query = query.where(
             Criterion.all(
                 [
-                    data_ticker.ticker.isin(past_universe_stock_list),
+                    # data_ticker.ticker.isin(past_universe_stock_list),
                     data_day_price.date >= start_date,
                     data_day_price.date <= end_date,
                 ]
@@ -175,7 +184,12 @@ class Reader:
         return df
 
     def get_day_price_data(
-        self, universe: Universe, trading_share: bool, trading_trend: bool, start_date: datetime.date, end_date: datetime.date
+        self,
+        universe: Universe,
+        trading_share: bool,
+        trading_trend: bool,
+        start_date: datetime.date,
+        end_date: datetime.date,
     ) -> dict:
 
         """
@@ -200,7 +214,13 @@ class Reader:
         return self.__get_day_price_data(universe, PhysicalTable.edited_candle_day)
 
     def __get_day_price_data_by_ticker(
-        self, ticker, table_name, trading_share: bool, trading_trend: bool, start_date: datetime.date, end_date: datetime.date
+        self,
+        ticker,
+        table_name,
+        trading_share: bool,
+        trading_trend: bool,
+        start_date: datetime.date,
+        end_date: datetime.date,
     ):
 
         data_day_price, data_ticker = Tables(table_name, "data_ticker")
@@ -302,7 +322,9 @@ class Reader:
 
         return today_universe_stock_list
 
-    def get_index_day_price_data(self, universe: Universe, start_date: datetime.date, end_date: datetime.date) -> Optional[DataFrame]:
+    def get_index_day_price_data(
+        self, universe: Universe, start_date: datetime.date, end_date: datetime.date
+    ) -> Optional[DataFrame]:
         """
         해당 universe의 index 가격을 조회
         :param universe: kospi, kosdaq
@@ -332,7 +354,9 @@ class Reader:
 
         return df
 
-    def get_exchange_rate(self, exchange_index: ExchangeRate, start_date: datetime.date, end_date: datetime.date) -> DataFrame:
+    def get_exchange_rate(
+        self, exchange_index: ExchangeRate, start_date: datetime.date, end_date: datetime.date
+    ) -> DataFrame:
         """
         달러, 유로, 엔 환율 조회
         :param exchange_index:

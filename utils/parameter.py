@@ -56,7 +56,9 @@ class Table(Enum):
 
 
 class Field(Enum):
+    ticker_id = ("ticker_id", Table.candle_day)
     open = ("open", Table.candle_day)
+    low = ("low", Table.candle_day)
     high = ("high", Table.candle_day)
     close = ("close", Table.candle_day)
     vol = ("vol", Table.candle_day)
@@ -73,6 +75,7 @@ class Field(Enum):
     etc_buy_vol = ("etc_buy_vol", Table.day_trading_trend)
     cap = ("cap", Table.day_trading_info)
     shares_out = ("shares_out", Table.day_trading_info)
+    is_active = ("is_active", Table.ticker_history)
 
     def __init__(self, column_name: str, table: Table):
         self.column_name = column_name
