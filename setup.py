@@ -23,7 +23,7 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name="utils",
-    version="5.1.0",
+    version="5.2.0",
     description="Alpha trading utils with pandas",
     python_requires="==3.*,>=3.7.9",
     project_urls={
@@ -38,7 +38,7 @@ setup(
     package_data={},
     install_requires=[
         "pandas==1.*,>=1.2.3",
-        "pymysql==1.*,>=1.0.2",
+        "pymysql==0.*,>=0.9.3",
         "pypika==0.*,>=0.47.0",
         "python-dotenv==0.*,>=0.15.0",
         "python-telegram-bot==12.*,>=12.8.0",
